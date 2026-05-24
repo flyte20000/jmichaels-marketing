@@ -1,0 +1,1209 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J Michael's Ã¢â‚¬â€ Marketing HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0A0A;--s1:#141414;--s2:#1E1E1E;--s3:#262626;--s4:#2E2E2E;
+  --gold:#C9972A;--gold2:#F0C050;--border:#303030;--border2:#3C3C3C;
+  --text:#F5F2ED;--t2:#C8BFA8;--t3:#8A8070;--t4:#4A4540;
+  --green:#2DBD7E;--red:#E05555;--blue:#4A90D9;--purple:#8B6FD4;--orange:#E87D30;
+  --r:10px;--rsm:6px
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;min-height:100vh}
+/* AUTH */
+#auth-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+.auth-logo{font-family:'Cormorant Garamond',serif;font-size:2.6rem;font-weight:600;color:var(--gold2);letter-spacing:.05em;margin-bottom:4px}
+.auth-sub{font-size:11px;color:var(--t2);letter-spacing:.18em;text-transform:uppercase;margin-bottom:2.5rem}
+.auth-box{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:2rem;width:100%;max-width:380px}
+.auth-box h3{font-size:15px;font-weight:500;margin-bottom:1.5rem;text-align:center;color:var(--gold2)}
+.f{margin-bottom:1rem}
+.f label{display:block;font-size:11px;color:var(--t2);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase}
+.f input,.f select,.f textarea{width:100%;background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:9px 11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--gold)}
+.f textarea{resize:vertical}
+.btn-g{width:100%;background:var(--gold);color:#0A0A0A;border:none;border-radius:var(--rsm);padding:11px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-g:hover{background:var(--gold2)}
+.btn-g:disabled{background:var(--s3);color:var(--t3);cursor:not-allowed}
+.err{color:var(--red);font-size:11px;margin-top:.6rem;text-align:center;min-height:16px}
+.hint{font-size:11px;color:var(--t2);text-align:center;margin-top:1rem}
+.hint span{color:var(--gold2);cursor:pointer;text-decoration:underline}
+/* APP */
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{background:var(--s1);border-bottom:1px solid var(--border);padding:0 1.25rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tl{display:flex;align-items:center;gap:10px}
+.logo{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--gold2)}
+.userpill{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2)}
+.rbadge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.04em}
+.rb-admin{background:#2A1F08;color:var(--gold2);border:1px solid var(--gold)}
+.rb-staff{background:#0D1F1A;color:var(--green);border:1px solid var(--green)}
+.bsm{background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 11px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:border-color .15s}
+.bsm:hover{border-color:var(--gold);color:var(--gold2)}
+.nb{background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 10px;color:var(--t2);font-size:12px;cursor:pointer;position:relative}
+.nbadge{background:var(--red);color:#fff;font-size:9px;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;position:absolute;top:-5px;right:-5px;font-weight:600}
+.tabbar{background:var(--s1);border-bottom:1px solid var(--border);display:flex;padding:0 1rem;gap:0;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{padding:12px 14px;font-size:12px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s;user-select:none}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--gold2);border-bottom-color:var(--gold)}
+.tab.admin-only{display:none}
+.tab.admin-only.show{display:block}
+.content{flex:1;padding:1.25rem;overflow-y:auto}
+.panel{display:none}
+.panel.active{display:block}
+/* COMPONENTS */
+.sec{font-size:10px;color:var(--t2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.75rem;font-weight:600}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.ga{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem}
+.btn-o{background:transparent;border:1px solid var(--border2);border-radius:var(--rsm);padding:6px 13px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-o:hover{border-color:var(--gold);color:var(--gold2)}
+.btn-add{background:var(--gold);color:#0A0A0A;border:none;border-radius:var(--rsm);padding:8px 16px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-add:hover{background:var(--gold2)}
+.btn-d{background:transparent;border:1px solid var(--red);border-radius:var(--rsm);padding:5px 11px;color:var(--red);font-family:'Outfit',sans-serif;font-size:11px;cursor:pointer}
+.metric{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem;text-align:center}
+.mv{font-size:1.8rem;font-weight:600;color:var(--gold2);font-family:'Cormorant Garamond',serif}
+.ml{font-size:10px;color:var(--t2);margin-top:3px;letter-spacing:.04em}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500}
+.tag-draft{background:#1A1A0A;color:#E0B040;border:1px solid #6A5010}
+.tag-sched{background:#0A1A2A;color:#6AACF0;border:1px solid #1A4A7A}
+.tag-pub{background:#0A1F0D;color:#40D090;border:1px solid #0F5020}
+.tag-pend{background:#1A0A1A;color:#A880E8;border:1px solid #4A2A7A}
+.tag-rej{background:#1F0A0A;color:#F07070;border:1px solid #6A1A1A}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--s1);border:1px solid var(--gold);border-radius:var(--rsm);padding:10px 18px;font-size:12px;color:var(--gold2);z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{text-align:center;color:var(--t2);font-size:12px;padding:2.5rem}
+.mwrap{display:none;background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;margin-top:1rem;margin-bottom:1rem}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.mtitle{font-size:14px;font-weight:500;color:var(--gold2)}
+/* GENERATE */
+.gen-wrap{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:1rem}
+.qbtn{background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:8px 10px;font-size:12px;color:var(--text);cursor:pointer;text-align:left;line-height:1.4;transition:all .15s}
+.qbtn:hover{border-color:var(--gold);color:var(--gold2);background:var(--s3)}
+.outbox{background:var(--s2);border-radius:var(--rsm);padding:1rem;min-height:180px;font-size:12px;line-height:1.8;color:var(--text);white-space:pre-wrap;overflow-y:auto;max-height:320px}
+/* CALENDAR */
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cdl{text-align:center;font-size:10px;color:var(--t2);padding:4px 0;letter-spacing:.06em;text-transform:uppercase}
+.cday{background:var(--s1);border:1px solid var(--border);border-radius:6px;min-height:72px;padding:5px;cursor:pointer;transition:border-color .15s}
+.cday:hover{border-color:var(--gold)}
+.cday.today{border-color:var(--gold)}
+.cday.other .cdate{color:var(--t4)}
+.cdate{font-size:10px;font-weight:500;margin-bottom:3px;color:var(--text)}
+.chip{font-size:9px;border-radius:3px;padding:2px 4px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border-left:2px solid}
+.chip-fb{background:rgba(66,103,178,.3);border-left-color:#4267B2;color:#9ABAF0}
+.chip-ig{background:rgba(193,53,132,.3);border-left-color:#C13584;color:#E0A0C8}
+.chip-em{background:rgba(201,151,42,.3);border-left-color:#C9972A;color:#E8C060}
+.chip-gg{background:rgba(52,168,83,.3);border-left-color:#34A853;color:#70D080}
+.chip-yelp{background:rgba(211,34,35,.3);border-left-color:#D32323;color:#F08080}
+.chip-sms{background:rgba(139,111,212,.3);border-left-color:#8B6FD4;color:#B8A0E8}
+.addbtn{background:transparent;border:1px dashed var(--border2);border-radius:4px;width:100%;font-size:14px;color:var(--t2);cursor:pointer;margin-top:3px;padding:2px 0;transition:all .15s}
+.addbtn:hover{border-color:var(--gold);color:var(--gold2)}
+/* SCORE */
+.score-ring{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:600;font-family:'Cormorant Garamond',serif;border:3px solid;flex-shrink:0}
+.score-a{border-color:var(--green);color:var(--green)}
+.score-b{border-color:var(--gold2);color:var(--gold2)}
+.score-c{border-color:var(--orange);color:var(--orange)}
+.score-d{border-color:var(--red);color:var(--red)}
+.sbar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.sbar-lbl{color:var(--t2);width:95px;flex-shrink:0;text-transform:capitalize}
+.sbar-track{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:3px}
+.sbar-val{color:var(--text);width:28px;text-align:right;flex-shrink:0}
+/* REMINDERS */
+.rem-item{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.75rem;display:flex;align-items:flex-start;gap:12px}
+.rem-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.rem-urgent{border-left:3px solid var(--red)}
+.rem-warn{border-left:3px solid var(--orange)}
+.rem-ok{border-left:3px solid var(--green)}
+.rem-info{border-left:3px solid var(--blue)}
+/* ANALYTICS */
+.plat-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem}
+.pstat{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)}
+.pstat:last-of-type{border-bottom:none}
+.ebar{height:4px;border-radius:2px;margin-top:8px;background:var(--s3)}
+.efill{height:100%;border-radius:2px;background:var(--gold)}
+/* USERS */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:10px;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+/* APPROVALS */
+.btn-approve{background:#0A1F0D;border:1px solid var(--green);color:var(--green);border-radius:var(--rsm);padding:6px 14px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif}
+.btn-reject{background:#1F0A0A;border:1px solid var(--red);color:var(--red);border-radius:var(--rsm);padding:6px 14px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif}
+/* RESPONSIVE */
+@media(max-width:640px){
+  .gen-wrap,.g2,.g3{grid-template-columns:1fr}
+  .qgrid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-wrap">
+  <div class="auth-logo">J Michael's</div>
+  <div class="auth-sub">Marketing Command Center</div>
+  <div class="auth-box" id="login-box">
+    <h3>Sign In</h3>
+    <div class="f"><label>Username</label><input id="lu" type="text" placeholder="username" autocomplete="username"></div>
+    <div class="f"><label>Password</label><input id="lp" type="password" placeholder="password" autocomplete="current-password"></div>
+    <button class="btn-g" onclick="doLogin()">Sign In</button>
+    <div class="err" id="lerr"></div>
+    <div class="hint">Have an invite code? <span onclick="showReg()">Register here</span></div>
+  </div>
+  <div class="auth-box" id="reg-box" style="display:none">
+    <h3>Create Account</h3>
+    <div class="f"><label>Invite Code</label><input id="rc" type="text" placeholder="Paste your invite code"></div>
+    <div class="f"><label>Username</label><input id="ru" type="text" placeholder="Choose a username" autocomplete="username"></div>
+    <div class="f"><label>Password</label><input id="rp" type="password" placeholder="Choose a password" autocomplete="new-password"></div>
+    <button class="btn-g" onclick="doReg()">Create Account</button>
+    <div class="err" id="rerr"></div>
+    <div class="hint"><span onclick="showLogin()">Back to sign in</span></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="tl">
+      <div class="logo">J Michael's</div>
+      <div style="font-size:10px;color:var(--t2);letter-spacing:.14em;text-transform:uppercase;display:none" id="tagline">Marketing HQ</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="nb" onclick="switchTab('notifications')" title="Notifications">
+        <i class="ti ti-bell" style="font-size:14px"></i>
+        <div class="nbadge" id="nb-count" style="display:none">0</div>
+      </div>
+      <div class="nb" onclick="switchTab('reminders')" title="Reminders">
+        <i class="ti ti-clock" style="font-size:14px"></i>
+        <div class="nbadge" id="rem-badge" style="display:none;background:var(--orange)">0</div>
+      </div>
+      <div class="userpill">
+        <span id="tu" style="color:var(--text)"></span>
+        <span class="rbadge" id="tr"></span>
+        <button class="bsm" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active" data-t="generate" onclick="switchTab('generate')">Ã¢Å“Â¦ Generate</div>
+    <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Photos</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
+    <div class="tab" data-t="analytics" onclick="switchTab('analytics')">Analytics</div>
+    <div class="tab" data-t="scores" onclick="switchTab('scores')">Scores</div>
+    <div class="tab" data-t="reminders" onclick="switchTab('reminders')">Reminders <span id="rem-tab-badge" style="display:none;background:var(--orange);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px">0</span></div>
+    <div class="tab" data-t="reputation" onclick="switchTab('reputation')">Reputation</div>
+    <div class="tab" data-t="campaigns" onclick="switchTab('campaigns')">Campaigns</div>
+    <div class="tab" data-t="library" onclick="switchTab('library')">Library</div>
+    <div class="tab" data-t="approvals" onclick="switchTab('approvals')">Approvals <span id="appr-badge" style="display:none;background:var(--purple);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px">0</span></div>
+    <div class="tab" data-t="notifications" onclick="switchTab('notifications')">Notifications</div>
+    <div class="tab admin-only" data-t="users" onclick="switchTab('users')">Users & Invites</div>
+  </div>
+
+  <div class="content">
+
+    <!-- GENERATE -->
+    <div class="panel active" id="panel-generate">
+      <div class="gen-wrap">
+        <div class="card">
+          <div class="sec">Quick prompts</div>
+          <div class="qgrid" id="qgrid"></div>
+          <div class="sec" style="margin-top:.75rem">Custom prompt</div>
+          <div class="f"><textarea id="cprompt" rows="4" placeholder="Describe what you needÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label>Platform</label>
+            <select id="gplat"><option>Facebook</option><option>Instagram</option><option>Email newsletter</option><option>Google Business</option><option>SMS / Text</option><option>Yelp response</option><option>TripAdvisor response</option><option>All platforms</option></select>
+          </div>
+          <div class="f"><label>Tone</label>
+            <select id="gtone"><option>Warm & inviting</option><option>Upbeat & fun</option><option>Professional</option><option>Urgent / Limited time</option><option>Storytelling</option></select>
+          </div>
+          <button class="btn-g" id="btngen" onclick="genContent()">Generate Content</button>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:10px">
+          <div class="sec">Output</div>
+          <div class="outbox" id="outbox"><span style="color:var(--t2);font-style:italic">Generated content appears hereÃ¢â‚¬Â¦</span></div>
+          <div class="row">
+            <button class="btn-o" onclick="copyOut()"><i class="ti ti-copy" style="font-size:12px;margin-right:4px"></i>Copy</button>
+            <button class="btn-o" onclick="saveToLib()">Save to Library</button>
+            <button class="btn-o" onclick="saveToCalendar()">Add to Calendar</button>
+            <button class="btn-o" onclick="submitApproval()">Submit for Approval</button>
+          </div>
+          <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTOS -->
+<div class="panel" id="panel-photos"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div class="sec" style="margin:0">Photo Library</div><div style="display:flex;align-items:center;gap:8px"><span id="upload-status" style="font-size:11px;color:var(--t2)"></span><button class="btn-add" onclick="document.getElementById('photo-file').click()">Upload Photos</button><input type="file" id="photo-file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(this)"></div></div><div id="photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:1rem"></div></div>
+<!-- CALENDAR -->
+    <div class="panel" id="panel-calendar">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div class="row">
+          <button class="bsm" onclick="chM(-1)">Ã¢â‚¬Â¹</button>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--gold2)" id="cal-lbl"></div>
+          <button class="bsm" onclick="chM(1)">Ã¢â‚¬Âº</button>
+        </div>
+        <button class="btn-o" onclick="openAddPost(null)">+ Add Post</button>
+      </div>
+      <div class="calgrid" id="calgrid"></div>
+      <div class="mwrap" id="cal-modal">
+        <div class="mhead"><div class="mtitle" id="cmt">Add Post</div><button class="bsm" onclick="closeCalModal()">Ã¢Å“â€¢</button></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>Date</label><input type="date" id="pdate"></div>
+          <div class="f" style="margin:0"><label>Platform</label>
+            <select id="pplat"><option value="fb">Facebook</option><option value="ig">Instagram</option><option value="em">Email</option><option value="gg">Google</option><option value="yelp">Yelp</option><option value="sms">SMS</option></select>
+          </div>
+          <div class="f" style="margin:0"><label>Status</label>
+            <select id="pstatus"><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option></select>
+          </div>
+        </div>
+        <div class="f"><label>Content</label><textarea id="pcontent" rows="4"></textarea></div>
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <button class="btn-d" id="btn-del-post" onclick="delPost()" style="display:none">Delete</button>
+          <button class="btn-o" onclick="closeCalModal()">Cancel</button>
+          <button class="btn-add" onclick="savePost()">Save Post</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="panel" id="panel-analytics">
+      <div class="ga" id="ana-metrics"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.75rem;margin-bottom:1rem" id="plat-grid"></div>
+      <div class="card">
+        <div class="sec" style="margin-bottom:.75rem">Engagement rate Ã¢â‚¬â€ last 8 weeks</div>
+        <div style="display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:var(--t2)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4267B2;margin-right:4px"></span>Facebook</span>
+          <span><span style="display:inline-block;width:10px;height:3px;background:#C13584;margin-right:4px;vertical-align:middle"></span>Instagram</span>
+          <span><span style="display:inline-block;width:10px;height:3px;background:#C9972A;margin-right:4px;vertical-align:middle;border-top:2px dotted #C9972A;background:transparent"></span>Email</span>
+        </div>
+        <div style="position:relative;width:100%;height:200px"><canvas id="eng-chart" role="img" aria-label="Engagement rate line chart for Facebook, Instagram, and Email over 8 weeks">Engagement trends shown for three platforms.</canvas></div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE SCORES -->
+    <div class="panel" id="panel-scores">
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Score a post with AI</div>
+          <div class="f"><label>Platform</label>
+            <select id="score-plat"><option value="fb">Facebook</option><option value="ig">Instagram</option><option value="em">Email</option><option value="gg">Google Business</option><option value="yelp">Yelp</option><option value="sms">SMS</option></select>
+          </div>
+          <div class="f"><label>Post content</label><textarea id="score-content" rows="5" placeholder="Paste your post content hereÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label>Actual results (optional)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <input id="sc-likes" type="number" placeholder="Likes" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:7px 9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;outline:none;width:100%">
+              <input id="sc-comments" type="number" placeholder="Comments" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:7px 9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;outline:none;width:100%">
+              <input id="sc-reach" type="number" placeholder="Reach" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:7px 9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;outline:none;width:100%">
+            </div>
+          </div>
+          <button class="btn-g" id="btn-score" onclick="scorePost()">Score This Post</button>
+        </div>
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Score result</div>
+          <div id="score-result"><div class="empty" style="padding:1rem">Submit a post above to see its performance score</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div class="sec" style="margin:0">Score history</div>
+          <select id="score-filter" onchange="renderScoreHistory()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 9px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px">
+            <option value="">All platforms</option>
+            <option value="fb">Facebook</option><option value="ig">Instagram</option><option value="em">Email</option><option value="gg">Google</option>
+          </select>
+        </div>
+        <div id="score-hist"></div>
+        <div style="position:relative;width:100%;height:160px;margin-top:1rem"><canvas id="score-chart" role="img" aria-label="Bar chart of post scores over time">Post score history.</canvas></div>
+      </div>
+    </div>
+
+    <!-- REMINDERS -->
+    <div class="panel" id="panel-reminders">
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Add reminder</div>
+          <div class="f"><label>Title</label><input id="rem-title" placeholder="e.g. Post Friday special by 10am"></div>
+          <div class="f"><label>Type</label>
+            <select id="rem-type"><option value="post">Post due</option><option value="review">Review response</option><option value="campaign">Campaign milestone</option><option value="analytics">Check analytics</option><option value="custom">Custom</option></select>
+          </div>
+          <div class="f"><label>Due date & time</label><input type="datetime-local" id="rem-due"></div>
+          <div class="f"><label>Priority</label>
+            <select id="rem-priority"><option value="high">High Ã¢â‚¬â€ urgent</option><option value="medium">Medium</option><option value="low">Low</option></select>
+          </div>
+          <div class="f"><label>Notes</label><textarea id="rem-notes" rows="2" placeholder="Optional detailsÃ¢â‚¬Â¦"></textarea></div>
+          <button class="btn-add" onclick="addReminder()" style="width:100%">Add Reminder</button>
+        </div>
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Status overview</div>
+          <div id="rem-summary"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div class="sec" style="margin:0">All reminders</div>
+          <div class="row" style="gap:8px">
+            <select id="rem-filter" onchange="renderReminders()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 9px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px">
+              <option value="active">Active</option><option value="done">Completed</option><option value="all">All</option>
+            </select>
+            <button class="btn-o" onclick="genSmartReminders()">Ã¢Å“Â¦ AI Smart Reminders</button>
+          </div>
+        </div>
+        <div id="rem-list"></div>
+      </div>
+    </div>
+
+    <!-- REPUTATION -->
+    <div class="panel" id="panel-reputation">
+      <div class="ga" id="rep-scores"></div>
+      <div class="g2">
+        <div>
+          <div class="sec" style="margin-bottom:.75rem">Recent reviews</div>
+          <div id="reviews-list"></div>
+        </div>
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">AI review response generator</div>
+          <div class="f"><label>Paste review text</label><textarea id="rev-input" rows="4" placeholder="Paste the review you want to respond toÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label>Tone</label>
+            <select id="rev-tone"><option>Grateful & warm</option><option>Professional & apologetic</option><option>Friendly & direct</option></select>
+          </div>
+          <button class="btn-g" id="btn-rev" onclick="genRevReply()">Generate Reply</button>
+          <div class="outbox" id="rev-out" style="margin-top:10px;min-height:80px"><span style="color:var(--t2);font-style:italic">Reply appears hereÃ¢â‚¬Â¦</span></div>
+          <button class="btn-o" onclick="cpRevOut()" style="margin-top:8px;width:100%">Copy Reply</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPAIGNS -->
+    <div class="panel" id="panel-campaigns">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="sec" style="margin:0">Active campaigns</div>
+        <button class="btn-o" onclick="showCampModal()">+ New Campaign</button>
+      </div>
+      <div class="mwrap" id="camp-modal">
+        <div class="mhead"><div class="mtitle">New Campaign</div><button class="bsm" onclick="hideCampModal()">Ã¢Å“â€¢</button></div>
+        <div class="g2" style="gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>Name</label><input id="camp-name" placeholder="e.g. Summer Promo"></div>
+          <div class="f" style="margin:0"><label>Goal</label><select id="camp-goal"><option>Brand awareness</option><option>Drive reservations</option><option>Promote event</option><option>Loyalty / retention</option><option>New menu launch</option></select></div>
+        </div>
+        <div class="g2" style="gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>Start date</label><input type="date" id="camp-start"></div>
+          <div class="f" style="margin:0"><label>End date</label><input type="date" id="camp-end"></div>
+        </div>
+        <div class="f"><label>Description</label><textarea id="camp-desc" rows="2" placeholder="Campaign overviewÃ¢â‚¬Â¦"></textarea></div>
+        <div style="text-align:right"><button class="btn-add" onclick="saveCampaign()">Create Campaign</button></div>
+      </div>
+      <div id="camp-list"></div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="panel" id="panel-library">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="sec" style="margin:0">Content library</div>
+        <select id="lib-filter" onchange="renderLibrary()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:6px 10px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px">
+          <option value="">All platforms</option>
+          <option value="fb">Facebook</option><option value="ig">Instagram</option><option value="em">Email</option><option value="gg">Google</option>
+        </select>
+      </div>
+      <div id="lib-list"></div>
+    </div>
+
+    <!-- APPROVALS -->
+    <div class="panel" id="panel-approvals">
+      <div class="sec" style="margin-bottom:.75rem">Pending approval</div>
+      <div id="appr-list"></div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="panel" id="panel-notifications">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="sec" style="margin:0">Notifications</div>
+        <button class="btn-o" onclick="markAllRead()">Mark all read</button>
+      </div>
+      <div class="card" id="notif-list"></div>
+    </div>
+
+    <!-- USERS & INVITES -->
+    <div class="panel" id="panel-users">
+      <div class="g2" style="margin-bottom:1rem">
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Add user directly</div>
+          <div class="f"><label>Username</label><input id="nu" type="text" autocomplete="off"></div>
+          <div class="f"><label>Password</label><input id="np" type="password"></div>
+          <div class="f"><label>Role</label><select id="nr"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>
+          <button class="btn-add" onclick="addUser()">Add User</button>
+          <div class="err" id="uerr"></div>
+        </div>
+        <div class="card">
+          <div class="sec" style="margin-bottom:.75rem">Generate invite code</div>
+          <div class="f"><label>Role for invitee</label><select id="inv-role"><option value="staff">Staff</option><option value="admin">Admin</option></select></div>
+          <div class="f"><label>Expires in</label><select id="inv-exp"><option value="1">24 hours</option><option value="7">7 days</option><option value="30">30 days</option></select></div>
+          <button class="btn-add" onclick="genInvite()">Generate Code</button>
+          <div id="inv-display" style="display:none;margin-top:.75rem">
+            <div class="sec">Share this code</div>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+              <div id="inv-code-box" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:10px 12px;font-size:13px;color:var(--gold2);font-family:monospace;flex:1;letter-spacing:.1em"></div>
+              <button class="btn-o" onclick="cpInvite()">Copy</button>
+            </div>
+            <div style="font-size:10px;color:var(--t2);margin-top:6px" id="inv-exp-lbl"></div>
+          </div>
+          <div style="margin-top:.75rem">
+            <div class="sec" style="margin-bottom:.5rem">Active invite codes</div>
+            <div id="inv-list" style="font-size:11px;color:var(--t2)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div class="sec" style="margin:0">All users</div>
+          <button class="btn-o" onclick="showPwModal()"><i class="ti ti-lock" style="font-size:12px;margin-right:4px"></i>Change my password</button>
+        </div>
+        <table class="tbl"><thead><tr><th>Username</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody id="utbody"></tbody></table>
+      </div>
+      <div class="mwrap" id="pw-modal">
+        <div class="mhead"><div class="mtitle">Change Password</div><button class="bsm" onclick="hidePwModal()">Ã¢Å“â€¢</button></div>
+        <div class="f"><label>Current password</label><input id="pw-cur" type="password"></div>
+        <div class="f"><label>New password</label><input id="pw-new" type="password"></div>
+        <div class="f"><label>Confirm new password</label><input id="pw-conf" type="password"></div>
+        <button class="btn-add" onclick="changePassword()">Update Password</button>
+        <div class="err" id="pw-err"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://jmichaels-marketing-api.kurt-307.workers.dev';
+
+let TOKEN = localStorage.getItem('jm_token');
+let CU = null;
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+let editPid = null, genOut = '', revOut = '';
+let engChart = null, scoreChart = null;
+
+const pnames = {fb:'Facebook',ig:'Instagram',em:'Email',gg:'Google',yelp:'Yelp',sms:'SMS',trip:'TripAdvisor'};
+const platMap = {'Facebook':'fb','Instagram':'ig','Email newsletter':'em','Google Business':'gg','SMS / Text':'sms','Yelp response':'yelp','TripAdvisor response':'trip','All platforms':'fb'};
+
+async function api(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}) },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const res = await fetch(API + path, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'API error');
+    return data;
+  } catch (e) {
+    showToast('Error: ' + e.message);
+    throw e;
+  }
+}
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function fdate(iso) { return iso ? iso.split('T')[0] : 'Ã¢â‚¬â€'; }
+function scoreGrade(n) {
+  if (n >= 85) return { cls: 'score-a', label: 'Excellent' };
+  if (n >= 70) return { cls: 'score-b', label: 'Good' };
+  if (n >= 55) return { cls: 'score-c', label: 'Fair' };
+  return { cls: 'score-d', label: 'Needs Work' };
+}
+
+function showLogin() { document.getElementById('login-box').style.display = 'block'; document.getElementById('reg-box').style.display = 'none'; }
+function showReg() { document.getElementById('login-box').style.display = 'none'; document.getElementById('reg-box').style.display = 'block'; }
+
+async function doLogin() {
+  const username = document.getElementById('lu').value.trim();
+  const password = document.getElementById('lp').value;
+  document.getElementById('lerr').textContent = '';
+  if (!username || !password) { document.getElementById('lerr').textContent = 'Enter credentials'; return; }
+  try {
+    const data = await api('/api/auth/login', 'POST', { username, password });
+    TOKEN = data.token;
+    localStorage.setItem('jm_token', TOKEN);
+    CU = data.user;
+    showApp();
+  } catch (e) {
+    document.getElementById('lerr').textContent = e.message;
+  }
+}
+
+async function doReg() {
+  const invite_code = document.getElementById('rc').value.trim();
+  const username = document.getElementById('ru').value.trim();
+  const password = document.getElementById('rp').value;
+  document.getElementById('rerr').textContent = '';
+  if (!invite_code || !username || !password) { document.getElementById('rerr').textContent = 'All fields required'; return; }
+  try {
+    await api('/api/auth/register', 'POST', { invite_code, username, password });
+    showToast('Account created! Sign in now.');
+    showLogin();
+  } catch (e) {
+    document.getElementById('rerr').textContent = e.message;
+  }
+}
+
+async function doLogout() {
+  try { await api('/api/auth/logout', 'POST'); } catch {}
+  TOKEN = null; CU = null;
+  localStorage.removeItem('jm_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-wrap').style.display = 'flex';
+  document.getElementById('lu').value = '';
+  document.getElementById('lp').value = '';
+}
+
+async function initApp() {
+  if (!TOKEN) { document.getElementById('auth-wrap').style.display = 'flex'; return; }
+  try {
+    CU = await api('/api/auth/me');
+    showApp();
+  } catch {
+    TOKEN = null;
+    localStorage.removeItem('jm_token');
+    document.getElementById('auth-wrap').style.display = 'flex';
+  }
+}
+
+function showApp() {
+  document.getElementById('auth-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('tagline').style.display = 'block';
+  document.getElementById('tu').textContent = CU.username;
+  const rb = document.getElementById('tr');
+  rb.textContent = CU.role;
+  rb.className = 'rbadge ' + (CU.role === 'admin' ? 'rb-admin' : 'rb-staff');
+  if (CU.role === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.classList.add('show'));
+  initQBtns();
+  renderCalendar();
+  renderAnalytics();
+  renderReputation();
+  renderCampaigns();
+  renderLibrary();
+  renderApprovals();
+  renderNotifs();
+  renderReminders();
+  if (CU.role === 'admin') { renderUsers(); renderInvites(); }
+  checkRemBadge();
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.t === t));
+  document.querySelectorAll('.panel').forEach(x => x.classList.toggle('active', x.id === 'panel-' + t));
+  if (t === 'calendar') renderCalendar();
+  if (t === 'analytics') renderAnalytics();
+  if (t === 'scores') renderScoreHistory();
+  if (t === 'reminders') renderReminders();
+  if (t === 'photos') loadPhotos();
+  if (t === 'notifications') { renderNotifs(); markAllRead(); }
+  if (t === 'users' && CU.role === 'admin') { renderUsers(); renderInvites(); }
+}
+
+const QP = [
+  {l:'Daily Special',p:"Write a social media post for our daily special at J Michael's Tavern & Grille in Stuart, FL. Make it mouthwatering and inviting."},
+  {l:'Happy Hour',p:"Craft a happy hour promo for J Michael's Ã¢â‚¬â€ weekdays 4Ã¢â‚¬â€œ7pm with drink specials. Drive foot traffic."},
+  {l:'Weekend Event',p:"Write an exciting weekend event announcement for J Michael's Tavern & Grille."},
+  {l:'New Menu Item',p:"Create an appetizing post introducing a new menu item at J Michael's."},
+  {l:'5-Star Reply',p:"Write a warm, grateful response to a 5-star Google/Yelp review for J Michael's."},
+  {l:'1-Star Reply',p:"Write a professional, empathetic response to a negative 1-star review for J Michael's."},
+  {l:'Holiday Post',p:"Create a holiday-themed marketing post for J Michael's Tavern & Grille."},
+  {l:'Email Newsletter',p:"Write a short monthly email newsletter for J Michael's regulars Ã¢â‚¬â€ events, specials, a personal touch."},
+  {l:'Loyalty Post',p:"Write a post thanking loyal regulars at J Michael's and encouraging repeat visits."},
+  {l:'Private Events',p:"Create a post promoting private dining and event hosting at J Michael's Tavern & Grille."},
+];
+function initQBtns() {
+  document.getElementById('qgrid').innerHTML = QP.map((q, i) => `<button class="qbtn" onclick="useQP(${i})">${q.l}</button>`).join('');
+}
+function useQP(i) { document.getElementById('cprompt').value = QP[i].p; }
+
+async function callClaude(system, userMsg, maxTokens = 1000) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: 'user', content: userMsg }],
+    }),
+  });
+  const d = await res.json();
+  return d.content?.map(c => c.text || '').join('') || '';
+}
+
+async function genContent() {
+  const prompt = document.getElementById('cprompt').value.trim();
+  const plat = document.getElementById('gplat').value;
+  const tone = document.getElementById('gtone').value;
+  if (!prompt) { showToast('Enter a prompt first'); return; }
+  const btn = document.getElementById('btngen');
+  const out = document.getElementById('outbox');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>GeneratingÃ¢â‚¬Â¦';
+  out.innerHTML = '<span style="color:var(--t2);font-style:italic">WritingÃ¢â‚¬Â¦</span>';
+  document.getElementById('gen-conf').textContent = '';
+  try {
+    genOut = await callClaude(
+      `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL Ã¢â‚¬â€ an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified platform and tone. Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
+      `Platform: ${plat}\nTone: ${tone}\n\n${prompt}`
+    );
+    out.textContent = genOut;
+  } catch { out.innerHTML = '<span style="color:var(--red)">Error generating. Please try again.</span>'; }
+  btn.disabled = false;
+  btn.textContent = 'Generate Content';
+}
+
+function copyOut() {
+  if (!genOut) { showToast('Nothing to copy'); return; }
+  navigator.clipboard.writeText(genOut).then(() => showToast('Copied!'));
+}
+
+async function saveToLib() {
+  if (!genOut) { showToast('Generate content first'); return; }
+  await api('/api/library', 'POST', { content: genOut, platform: platMap[document.getElementById('gplat').value] || 'fb' });
+  showToast('Saved to library!');
+  document.getElementById('gen-conf').textContent = 'Saved to Content Library';
+}
+
+async function saveToCalendar() {
+  if (!genOut) { showToast('Generate content first'); return; }
+  await api('/api/posts', 'POST', {
+    date: new Date().toISOString().split('T')[0],
+    platform: platMap[document.getElementById('gplat').value] || 'fb',
+    content: genOut,
+    status: 'draft',
+  });
+  showToast('Added to calendar!');
+  document.getElementById('gen-conf').textContent = 'Added to Calendar as draft';
+}
+
+async function submitApproval() {
+  if (!genOut) { showToast('Generate content first'); return; }
+  await api('/api/approvals', 'POST', { content: genOut, platform: document.getElementById('gplat').value });
+  await api('/api/notifications', 'POST', { title: 'New approval request', description: CU.username + ' submitted content for approval', type: 'approval' });
+  showToast('Submitted for approval!');
+  document.getElementById('gen-conf').textContent = 'Submitted for Admin approval';
+  renderApprovals();
+}
+
+async function renderCalendar() {
+  document.getElementById('cal-lbl').textContent = new Date(calY, calM, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const grid = document.getElementById('calgrid');
+  grid.innerHTML = '';
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
+    const el = document.createElement('div'); el.className = 'cdl'; el.textContent = d; grid.appendChild(el);
+  });
+  const posts = await api('/api/posts');
+  const byDate = {};
+  posts.forEach(p => { if (!byDate[p.date]) byDate[p.date] = []; byDate[p.date].push(p); });
+  const fd = new Date(calY, calM, 1).getDay();
+  const dim = new Date(calY, calM + 1, 0).getDate();
+  const dip = new Date(calY, calM, 0).getDate();
+  const today = new Date().toISOString().split('T')[0];
+  for (let i = 0; i < fd; i++) mkCell(grid, dip - fd + i + 1, 'other', calY, calM - 1, byDate);
+  for (let d = 1; d <= dim; d++) {
+    const ds = `${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    mkCell(grid, d, ds === today ? 'today' : '', calY, calM, byDate);
+  }
+  const rem2 = 42 - fd - dim;
+  for (let i = 1; i <= rem2; i++) mkCell(grid, i, 'other', calY, calM + 1, byDate);
+}
+function mkCell(grid, day, cls, yr, mo, byDate) {
+  const ds = `${yr}-${String(mo+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const c = document.createElement('div');
+  c.className = `cday ${cls}`;
+  c.innerHTML = `<div class="cdate">${day}</div>`;
+  (byDate[ds] || []).slice(0, 2).forEach(p => {
+    const ch = document.createElement('div');
+    ch.className = `chip chip-${p.platform}`;
+    ch.textContent = p.content.substring(0, 22) + 'Ã¢â‚¬Â¦';
+    ch.onclick = e => { e.stopPropagation(); openEditPost(p); };
+    c.appendChild(ch);
+  });
+  if ((byDate[ds] || []).length > 2) {
+    const m = document.createElement('div');
+    m.style.cssText = 'font-size:9px;color:var(--t2)';
+    m.textContent = `+${byDate[ds].length - 2} more`;
+    c.appendChild(m);
+  }
+  const ab = document.createElement('button');
+  ab.className = 'addbtn'; ab.textContent = '+';
+  ab.onclick = e => { e.stopPropagation(); openAddPost(ds); };
+  c.appendChild(ab);
+  grid.appendChild(c);
+}
+function chM(d) { calM += d; if (calM > 11) { calM = 0; calY++; } if (calM < 0) { calM = 11; calY--; } renderCalendar(); }
+function openAddPost(date) {
+  editPid = null;
+  document.getElementById('cmt').textContent = 'Add Post';
+  document.getElementById('pdate').value = date || new Date().toISOString().split('T')[0];
+  document.getElementById('pplat').value = 'fb';
+  document.getElementById('pstatus').value = 'draft';
+  document.getElementById('pcontent').value = '';
+  document.getElementById('btn-del-post').style.display = 'none';
+  document.getElementById('cal-modal').style.display = 'block';
+}
+function openEditPost(p) {
+  editPid = p.id;
+  document.getElementById('cmt').textContent = 'Edit Post';
+  document.getElementById('pdate').value = p.date;
+  document.getElementById('pplat').value = p.platform;
+  document.getElementById('pstatus').value = p.status || 'draft';
+  document.getElementById('pcontent').value = p.content;
+  document.getElementById('btn-del-post').style.display = 'inline-block';
+  document.getElementById('cal-modal').style.display = 'block';
+}
+function closeCalModal() { document.getElementById('cal-modal').style.display = 'none'; editPid = null; }
+async function savePost() {
+  const date = document.getElementById('pdate').value;
+  const platform = document.getElementById('pplat').value;
+  const status = document.getElementById('pstatus').value;
+  const content = document.getElementById('pcontent').value.trim();
+  if (!date || !content) { showToast('Date and content required'); return; }
+  if (editPid) await api(`/api/posts/${editPid}`, 'PUT', { date, platform, content, status });
+  else await api('/api/posts', 'POST', { date, platform, content, status });
+  closeCalModal(); renderCalendar(); showToast('Post saved!');
+}
+async function delPost() {
+  if (!editPid) return;
+  await api(`/api/posts/${editPid}`, 'DELETE');
+  closeCalModal(); renderCalendar(); showToast('Post deleted');
+}
+
+function renderAnalytics() {
+  const platforms = [
+    {name:'Facebook',color:'#4267B2',followers:1240,reach:'8.2K',impressions:'22.4K',eng:4.2,posts:42,trend:'+12%'},
+    {name:'Instagram',color:'#C13584',followers:890,reach:'5.6K',impressions:'14.1K',eng:6.8,posts:61,trend:'+24%'},
+    {name:'Google Business',color:'#34A853',followers:null,reach:'3.1K',impressions:'9.8K',eng:2.1,posts:8,trend:'+8%'},
+    {name:'Yelp',color:'#D32323',followers:null,reach:'2.4K',impressions:'6.2K',eng:3.5,posts:6,trend:'+5%'},
+    {name:'TripAdvisor',color:'#00AA6C',followers:null,reach:'1.8K',impressions:'4.4K',eng:2.8,posts:4,trend:'+3%'},
+    {name:'Email',color:'#C9972A',followers:620,reach:'430',impressions:'1.2K',eng:22.4,posts:12,trend:'+18%'},
+    {name:'SMS',color:'#8B6FD4',followers:210,reach:'190',impressions:'210',eng:38.2,posts:4,trend:'+2%'},
+    {name:'Twitter/X',color:'#1DA1F2',followers:340,reach:'1.2K',impressions:'3.4K',eng:1.8,posts:22,trend:'-4%'},
+  ];
+  document.getElementById('ana-metrics').innerHTML = `
+    <div class="metric"><div class="mv">159</div><div class="ml">Total Posts</div></div>
+    <div class="metric"><div class="mv">44.9K</div><div class="ml">Total Reach</div></div>
+    <div class="metric"><div class="mv">61.7K</div><div class="ml">Impressions</div></div>
+    <div class="metric"><div class="mv">10.2%</div><div class="ml">Avg Engagement</div></div>`;
+  document.getElementById('plat-grid').innerHTML = platforms.map(p => `
+    <div class="plat-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <div style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
+          <div style="font-size:12px;font-weight:500;color:var(--text)">${p.name}</div>
+        </div>
+        <span style="font-size:10px;color:${p.trend.startsWith('+')?'var(--green)':'var(--red)'}">${p.trend}</span>
+      </div>
+      ${p.followers !== null ? `<div class="pstat"><span style="color:var(--t2)">Followers</span><span style="color:var(--text);font-weight:500">${p.followers.toLocaleString()}</span></div>` : ''}
+      <div class="pstat"><span style="color:var(--t2)">Reach</span><span style="color:var(--text);font-weight:500">${p.reach}</span></div>
+      <div class="pstat"><span style="color:var(--t2)">Impressions</span><span style="color:var(--text);font-weight:500">${p.impressions}</span></div>
+      <div class="pstat"><span style="color:var(--t2)">Engagement</span><span style="color:var(--text);font-weight:500">${p.eng}%</span></div>
+      <div class="ebar"><div class="efill" style="width:${Math.min(p.eng*4,100)}%"></div></div>
+    </div>`).join('');
+  setTimeout(() => {
+    const ctx = document.getElementById('eng-chart'); if (!ctx) return;
+    if (engChart) engChart.destroy();
+    engChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7','Wk8'],
+        datasets: [
+          {label:'Facebook',data:[3.1,3.4,3.8,4.0,3.9,4.1,4.2,4.2],borderColor:'#4267B2',borderDash:[],tension:.4,pointRadius:3,borderWidth:2,fill:false},
+          {label:'Instagram',data:[5.2,5.6,5.9,6.1,6.4,6.6,6.7,6.8],borderColor:'#C13584',borderDash:[5,3],tension:.4,pointRadius:3,borderWidth:2,fill:false},
+          {label:'Email',data:[18.2,20.1,21.4,22.0,21.8,22.6,22.1,22.4],borderColor:'#C9972A',borderDash:[2,4],tension:.4,pointRadius:3,borderWidth:2,fill:false},
+        ],
+      },
+      options: { responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#C8BFA8',font:{size:10}},grid:{color:'#262626'}},y:{ticks:{color:'#C8BFA8',font:{size:10}},grid:{color:'#262626'}}} },
+    });
+  }, 300);
+}
+
+async function scorePost() {
+  const content = document.getElementById('score-content').value.trim();
+  const plat = document.getElementById('score-plat').value;
+  if (!content) { showToast('Paste post content first'); return; }
+  const btn = document.getElementById('btn-score');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>ScoringÃ¢â‚¬Â¦';
+  const resultEl = document.getElementById('score-result');
+  resultEl.innerHTML = '<div style="color:var(--t2);font-style:italic;padding:1rem">AnalyzingÃ¢â‚¬Â¦</div>';
+  try {
+    const likes = parseInt(document.getElementById('sc-likes').value) || 0;
+    const comments = parseInt(document.getElementById('sc-comments').value) || 0;
+    const reach = parseInt(document.getElementById('sc-reach').value) || 0;
+    const metricsNote = likes || comments || reach ? `\nActual results: ${likes} likes, ${comments} comments, ${reach} reach` : '';
+    const raw = await callClaude(
+      `You are a social media performance analyst for J Michael's Tavern & Grille. Return ONLY valid JSON (no markdown, no preamble):
+{"overall":85,"breakdown":{"hook":80,"clarity":90,"cta":75,"tone":85,"platform_fit":90,"emoji_use":80},"strengths":["strength 1","strength 2"],"improvements":["improvement 1","improvement 2"],"best_time":"7:00 PM on Friday","rewrite_tip":"One sentence tip to improve this specific post"}`,
+      `Platform: ${pnames[plat] || plat}${metricsNote}\n\nPost:\n${content}`, 600
+    );
+    const data = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    const g = scoreGrade(data.overall);
+    resultEl.innerHTML = `
+      <div style="display:flex;gap:16px;margin-bottom:1rem;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div class="score-ring ${g.cls}">${data.overall}</div>
+          <div style="font-size:10px;color:var(--t2)">${g.label}</div>
+        </div>
+        <div style="flex:1">
+          ${Object.entries(data.breakdown).map(([k,v]) => `
+          <div class="sbar-row">
+            <div class="sbar-lbl">${k.replace(/_/g,' ')}</div>
+            <div class="sbar-track"><div class="sbar-fill" style="width:${v}%;background:${v>=80?'#2DBD7E':v>=60?'#C9972A':'#E05555'}"></div></div>
+            <div class="sbar-val">${v}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
+        <div>
+          <div class="sec" style="margin-bottom:4px;color:var(--green)">Strengths</div>
+          ${data.strengths.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">Ã¢â‚¬Â¢ ${s}</div>`).join('')}
+        </div>
+        <div>
+          <div class="sec" style="margin-bottom:4px;color:var(--red)">Improve</div>
+          ${data.improvements.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">Ã¢â‚¬Â¢ ${s}</div>`).join('')}
+        </div>
+      </div>
+      <div style="background:var(--s2);border-radius:var(--rsm);padding:10px;margin-bottom:8px">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.08em">Best posting time</div>
+        <div style="font-size:12px;color:var(--gold2)">${data.best_time}</div>
+      </div>
+      <div style="background:var(--s2);border-radius:var(--rsm);padding:10px">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.08em">Quick rewrite tip</div>
+        <div style="font-size:12px;color:var(--text);line-height:1.5">${data.rewrite_tip}</div>
+      </div>`;
+    await api('/api/scores', 'POST', { content, platform: plat, overall: data.overall, grade: g.label, breakdown: data.breakdown, strengths: data.strengths, improvements: data.improvements, best_time: data.best_time, rewrite_tip: data.rewrite_tip });
+    renderScoreHistory();
+  } catch (e) {
+    resultEl.innerHTML = '<div style="color:var(--red);font-size:12px;padding:1rem">Scoring failed. Please try again.</div>';
+  }
+  btn.disabled = false; btn.textContent = 'Score This Post';
+}
+
+async function renderScoreHistory() {
+  const scores = await api('/api/scores');
+  const filter = document.getElementById('score-filter')?.value || '';
+  const filtered = filter ? scores.filter(s => s.platform === filter) : scores;
+  const histEl = document.getElementById('score-hist');
+  if (!filtered.length) { if (histEl) histEl.innerHTML = '<div class="empty">No scored posts yet.</div>'; return; }
+  const recent = filtered.slice(0, 10);
+  if (histEl) histEl.innerHTML = recent.map(s => {
+    const g = scoreGrade(s.overall);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div class="score-ring ${g.cls}" style="width:38px;height:38px;font-size:.85rem;border-width:2px;flex-shrink:0">${s.overall}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.content_preview}</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:2px">${pnames[s.platform]||s.platform} Ã‚Â· ${fdate(s.created_at)} Ã‚Â· by ${s.scored_by}</div>
+      </div>
+      <span class="tag ${g.label==='Excellent'?'tag-pub':g.label==='Good'?'tag-sched':g.label==='Fair'?'tag-draft':'tag-pend'}">${g.label}</span>
+    </div>`;
+  }).join('');
+  setTimeout(() => {
+    const ctx = document.getElementById('score-chart'); if (!ctx) return;
+    if (scoreChart) scoreChart.destroy();
+    const rev = scores.slice(-8).reverse();
+    scoreChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: rev.map((_, i) => `Post ${i+1}`), datasets: [{ label: 'Score', data: rev.map(s => s.overall), backgroundColor: rev.map(s => s.overall>=85?'#2DBD7E44':s.overall>=70?'#C9972A44':s.overall>=55?'#E87D3044':'#E0555544'), borderColor: rev.map(s => s.overall>=85?'#2DBD7E':s.overall>=70?'#C9972A':s.overall>=55?'#E87D30':'#E05555'), borderWidth: 1 }] },
+      options: { responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#C8BFA8',font:{size:10}},grid:{color:'#262626'}},y:{min:0,max:100,ticks:{color:'#C8BFA8',font:{size:10}},grid:{color:'#262626'}}} },
+    });
+  }, 300);
+}
+
+const remTypes = {
+  post:{icon:'ti-file-text',color:'#4A90D9',label:'Post due'},
+  review:{icon:'ti-star',color:'#C9972A',label:'Review response'},
+  campaign:{icon:'ti-speakerphone',color:'#8B6FD4',label:'Campaign'},
+  analytics:{icon:'ti-chart-bar',color:'#2DBD7E',label:'Analytics check'},
+  custom:{icon:'ti-bell',color:'#A09880',label:'Custom'},
+};
+
+async function checkRemBadge() {
+  const rems = await api('/api/reminders');
+  const now = Date.now();
+  const due = rems.filter(r => !r.done && new Date(r.due_at).getTime() <= now + 86400000);
+  const b = document.getElementById('rem-badge'); const tb = document.getElementById('rem-tab-badge');
+  if (due.length) { b.style.display = 'flex'; b.textContent = due.length; tb.style.display = 'inline'; tb.textContent = due.length; }
+  else { b.style.display = 'none'; tb.style.display = 'none'; }
+}
+
+async function addReminder() {
+  const title = document.getElementById('rem-title').value.trim();
+  const type = document.getElementById('rem-type').value;
+  const due_at = document.getElementById('rem-due').value;
+  const priority = document.getElementById('rem-priority').value;
+  const notes = document.getElementById('rem-notes').value.trim();
+  if (!title || !due_at) { showToast('Title and due date required'); return; }
+  await api('/api/reminders', 'POST', { title, type, due_at, priority, notes });
+  document.getElementById('rem-title').value = '';
+  document.getElementById('rem-notes').value = '';
+  renderReminders(); checkRemBadge(); showToast('Reminder added!');
+}
+
+async function renderReminders() {
+  const rems = await api('/api/reminders');
+  const filter = document.getElementById('rem-filter')?.value || 'active';
+  const now = Date.now();
+  let filtered = filter === 'active' ? rems.filter(r => !r.done) : filter === 'done' ? rems.filter(r => r.done) : rems;
+  filtered.sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
+  const overdue = filtered.filter(r => !r.done && new Date(r.due_at).getTime() < now);
+  const today = filtered.filter(r => !r.done && new Date(r.due_at).getTime() >= now && new Date(r.due_at).getTime() < now + 86400000);
+  const upcoming = filtered.filter(r => !r.done && new Date(r.due_at).getTime() >= now + 86400000);
+  const sumEl = document.getElementById('rem-summary');
+  if (sumEl) sumEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div class="metric"><div class="mv" style="color:var(--red)">${overdue.length}</div><div class="ml">Overdue</div></div>
+      <div class="metric"><div class="mv" style="color:var(--orange)">${today.length}</div><div class="ml">Due today</div></div>
+      <div class="metric"><div class="mv">${upcoming.length}</div><div class="ml">Upcoming</div></div>
+    </div>`;
+  const listEl = document.getElementById('rem-list');
+  if (!filtered.length) { listEl.innerHTML = '<div class="empty">No reminders to show</div>'; return; }
+  listEl.innerHTML = filtered.map(r => {
+    const rt = remTypes[r.type] || remTypes.custom;
+    const dueTs = new Date(r.due_at).getTime();
+    const isOverdue = !r.done && dueTs < now;
+    const isToday = !r.done && dueTs >= now && dueTs < now + 86400000;
+    const cls = r.done ? 'rem-ok' : isOverdue ? 'rem-urgent' : isToday ? 'rem-warn' : 'rem-info';
+    const dueStr = new Date(r.due_at).toLocaleDateString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    return `<div class="rem-item ${cls}">
+      <div class="rem-icon" style="background:${rt.color}22;color:${rt.color}"><i class="ti ${rt.icon}" style="font-size:16px"></i></div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;margin-bottom:3px;${r.done?'text-decoration:line-through;color:var(--t2)':''}">${r.title}</div>
+        ${r.notes ? `<div style="font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:4px">${r.notes}</div>` : ''}
+        <div style="font-size:10px;color:var(--t2)">${rt.label} Ã‚Â· Due: ${dueStr} Ã‚Â· ${r.priority} priority</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+        ${!r.done ? `<button class="btn-o" style="font-size:11px;padding:4px 10px" onclick="doneRem('${r.id}')">Done</button>` : '<span style="font-size:10px;color:var(--green)">Done</span>'}
+        <button class="btn-d" style="font-size:10px;padding:3px 8px" onclick="delRem('${r.id}')">Ã¢Å“â€¢</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function doneRem(id) { await api(`/api/reminders/${id}`, 'PUT', { done: true }); renderReminders(); checkRemBadge(); showToast('Marked complete!'); }
+async function delRem(id) { await api(`/api/reminders/${id}`, 'DELETE'); renderReminders(); checkRemBadge(); }
+async function genSmartReminders() {
+  const posts = await api('/api/posts');
+  const now = new Date();
+  const upcoming = posts.filter(p => p.status === 'scheduled' && new Date(p.date) >= now).slice(0, 5);
+  for (const p of upcoming) {
+    const due = new Date(p.date); due.setHours(9, 0, 0, 0);
+    await api('/api/reminders', 'POST', { title: `Post due: ${p.content.substring(0, 40)}Ã¢â‚¬Â¦`, type: 'post', due_at: due.toISOString(), priority: 'high', notes: `Platform: ${pnames[p.platform] || p.platform}` });
+  }
+  await api('/api/reminders', 'POST', { title: "Check this week's post performance", type: 'analytics', due_at: new Date(Date.now() + 86400000 * 2).toISOString(), priority: 'medium', notes: 'Review engagement across all platforms' });
+  renderReminders(); checkRemBadge(); showToast(`Smart reminders added!`);
+}
+
+function renderReputation() {
+  const platforms = [{name:'Google',rating:4.6,reviews:284,color:'#34A853'},{name:'Yelp',rating:4.2,reviews:156,color:'#D32323'},{name:'TripAdvisor',rating:4.5,reviews:92,color:'#00AA6C'},{name:'Facebook',rating:4.7,reviews:63,color:'#4267B2'}];
+  document.getElementById('rep-scores').innerHTML = platforms.map(p => `<div class="metric"><div class="mv" style="color:${p.color}">${p.rating}</div><div style="color:${p.color};font-size:14px;letter-spacing:2px">${'Ã¢Ëœâ€¦'.repeat(Math.round(p.rating))}${'Ã¢Ëœâ€ '.repeat(5-Math.round(p.rating))}</div><div class="ml">${p.name} Ã‚Â· ${p.reviews} reviews</div></div>`).join('');
+  const reviews = [
+    {author:'Sarah M.',platform:'Google',rating:5,date:'2 days ago',text:"Amazing! The grouper sandwich was the best I've had in Stuart. Staff was incredibly warm.",replied:true,reply:"Thank you Sarah! The grouper is a team favorite too. See you soon!"},
+    {author:'Tom R.',platform:'Yelp',rating:2,date:'5 days ago',text:'Service was slow on a Tuesday night and my steak came out wrong twice.',replied:false},
+    {author:'Lisa K.',platform:'TripAdvisor',rating:5,date:'1 week ago',text:'Hidden gem of the Treasure Coast! Went back 3 nights in a row. Craft cocktails are exceptional.',replied:true,reply:"Lisa, this made our whole week! Hope to see you back soon!"},
+  ];
+  document.getElementById('reviews-list').innerHTML = reviews.map(r => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <div><span style="font-size:12px;font-weight:500;color:var(--text)">${r.author}</span><span style="font-size:10px;background:var(--s2);padding:1px 6px;border-radius:3px;color:var(--t2);margin-left:6px">${r.platform}</span></div>
+        <div style="font-size:11px;color:var(--t2)">${r.date}</div>
+      </div>
+      <div style="color:${r.rating>=4?'var(--gold2)':'var(--red)'};font-size:12px;margin-bottom:4px">${'Ã¢Ëœâ€¦'.repeat(r.rating)}${'Ã¢Ëœâ€ '.repeat(5-r.rating)}</div>
+      <div style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px">${r.text}</div>
+      ${r.replied ? `<div style="background:var(--s2);border-radius:var(--rsm);padding:8px;font-size:11px;color:var(--t2);border-left:2px solid var(--gold)"><span style="font-size:10px;color:var(--gold2);font-weight:500">J Michael's replied:</span> ${r.reply}</div>` : `<button class="btn-o" style="font-size:10px;padding:4px 10px" onclick="document.getElementById('rev-input').value='${r.text.replace(/'/g,"\\'")}'" >Generate Reply</button>`}
+    </div>`).join('');
+}
+async function genRevReply() {
+  const rev = document.getElementById('rev-input').value.trim();
+  const tone = document.getElementById('rev-tone').value;
+  if (!rev) { showToast('Paste a review first'); return; }
+  const btn = document.getElementById('btn-rev'); const out = document.getElementById('rev-out');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>WritingÃ¢â‚¬Â¦';
+  out.innerHTML = '<span style="color:var(--t2);font-style:italic">GeneratingÃ¢â‚¬Â¦</span>';
+  try {
+    revOut = await callClaude(`You are responding to reviews for J Michael's Tavern & Grille in Stuart, FL. Write genuine 2-4 sentence responses. Never sound corporate. Sign off as "The J Michael's Team".`, `Tone: ${tone}\n\nReview: ${rev}`, 300);
+    out.textContent = revOut;
+  } catch { out.innerHTML = '<span style="color:var(--red)">Error. Try again.</span>'; }
+  btn.disabled = false; btn.textContent = 'Generate Reply';
+}
+function cpRevOut() { if (!revOut) { showToast('Generate a reply first'); return; } navigator.clipboard.writeText(revOut).then(() => showToast('Copied!')); }
+
+async function renderCampaigns() {
+  const camps = await api('/api/campaigns');
+  if (!camps.length) { document.getElementById('camp-list').innerHTML = '<div class="empty">No campaigns yet.</div>'; return; }
+  const now = new Date();
+  document.getElementById('camp-list').innerHTML = camps.map(c => {
+    const start = new Date(c.start_date), end = new Date(c.end_date);
+    const pct = Math.min(100, Math.round((Math.max(0, now - start) / (end - start)) * 100));
+    const active = now >= start && now <= end;
+    return `<div class="card" style="margin-bottom:.75rem">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:500;margin-bottom:3px;color:var(--text)">${c.name}</div><div style="font-size:11px;color:var(--t2)">${c.goal} Ã‚Â· ${c.start_date} Ã¢â€ â€™ ${c.end_date}</div></div>
+        <span class="tag ${active?'tag-pub':'tag-draft'}">${active?'Active':'Inactive'}</span>
+      </div>
+      ${c.description ? `<div style="font-size:11px;color:var(--text);margin-bottom:6px">${c.description}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t2);margin-bottom:4px"><span>Progress</span><span>${pct}%</span></div>
+      <div style="height:6px;border-radius:3px;background:var(--s3);overflow:hidden"><div style="height:100%;background:var(--gold);border-radius:3px;width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+function showCampModal() { const m = document.getElementById('camp-modal'); m.style.display = m.style.display === 'block' ? 'none' : 'block'; document.getElementById('camp-start').value = new Date().toISOString().split('T')[0]; }
+function hideCampModal() { document.getElementById('camp-modal').style.display = 'none'; }
+async function saveCampaign() {
+  const name = document.getElementById('camp-name').value.trim();
+  if (!name) { showToast('Name required'); return; }
+  await api('/api/campaigns', 'POST', { name, goal: document.getElementById('camp-goal').value, start_date: document.getElementById('camp-start').value, end_date: document.getElementById('camp-end').value, description: document.getElementById('camp-desc').value });
+  hideCampModal(); renderCampaigns(); showToast('Campaign created!');
+}
+
+async function renderLibrary() {
+  const lib = await api('/api/library');
+  const filter = document.getElementById('lib-filter')?.value || '';
+  const filtered = filter ? lib.filter(x => x.platform === filter) : lib;
+  if (!filtered.length) { document.getElementById('lib-list').innerHTML = '<div class="empty">No saved content yet.</div>'; return; }
+  document.getElementById('lib-list').innerHTML = filtered.map(item => `
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:.9rem;margin-bottom:.6rem;cursor:pointer" onclick="useLibItem('${item.id}')" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="font-size:10px;color:var(--t2)">${pnames[item.platform]||item.platform} Ã‚Â· ${fdate(item.saved_at)} Ã‚Â· by ${item.saved_by}</span>
+        <button class="btn-d" style="padding:2px 8px;font-size:10px" onclick="event.stopPropagation();delLib('${item.id}')">Remove</button>
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5">${item.content.substring(0,120)}${item.content.length>120?'Ã¢â‚¬Â¦':''}</div>
+    </div>`).join('');
+}
+async function useLibItem(id) {
+  const lib = await api('/api/library');
+  const item = lib.find(x => x.id === id);
+  if (item) { genOut = item.content; document.getElementById('outbox').textContent = item.content; switchTab('generate'); showToast('Loaded into Generate tab'); }
+}
+async function delLib(id) { await api(`/api/library/${id}`, 'DELETE'); renderLibrary(); }
+
+async function renderApprovals() {
+  const all = await api('/api/approvals');
+  const pending = all.filter(a => a.status === 'pending');
+  const b = document.getElementById('appr-badge');
+  if (pending.length) { b.style.display = 'inline'; b.textContent = pending.length; } else b.style.display = 'none';
+  if (!pending.length) { document.getElementById('appr-list').innerHTML = '<div class="empty">No pending approvals.</div>'; return; }
+  document.getElementById('appr-list').innerHTML = pending.map(a => `
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+        <div><span style="font-size:12px;font-weight:500;color:var(--text)">${a.platform}</span><span style="font-size:10px;color:var(--t2);margin-left:8px">by ${a.submitted_by} Ã‚Â· ${fdate(a.submitted_at)}</span></div>
+        <span class="tag tag-pend">Pending</span>
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">${a.content.substring(0,200)}${a.content.length>200?'Ã¢â‚¬Â¦':''}</div>
+      ${CU.role==='admin'?`<div style="display:flex;gap:8px"><button class="btn-approve" onclick="approvePost('${a.id}','${a.platform}','${a.content.replace(/'/g,"\\'")}')">Approve & Schedule</button><button class="btn-reject" onclick="rejectPost('${a.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--t2)">Awaiting admin review</div>'}
+    </div>`).join('');
+}
+async function approvePost(id, platform, content) {
+  await api(`/api/approvals/${id}`, 'PUT', { status: 'approved' });
+  const pm = {'Facebook':'fb','Instagram':'ig','Email newsletter':'em','Google Business':'gg','SMS / Text':'sms','Yelp response':'yelp','All platforms':'fb'};
+  await api('/api/posts', 'POST', { date: new Date().toISOString().split('T')[0], platform: pm[platform] || 'fb', content, status: 'scheduled' });
+  await api('/api/notifications', 'POST', { title: 'Post approved', description: 'A submitted post was approved and scheduled', type: 'success' });
+  renderApprovals(); renderCalendar(); showToast('Approved and scheduled!');
+}
+async function rejectPost(id) {
+  await api(`/api/approvals/${id}`, 'PUT', { status: 'rejected' });
+  await api('/api/notifications', 'POST', { title: 'Post rejected', description: 'A submitted post was rejected', type: 'warning' });
+  renderApprovals(); showToast('Post rejected');
+}
+
+async function renderNotifs() {
+  const notifs = await api('/api/notifications');
+  const unread = notifs.filter(n => !n.read).length;
+  const b = document.getElementById('nb-count');
+  if (unread > 0) { b.style.display = 'flex'; b.textContent = unread; } else b.style.display = 'none';
+  const colors = {info:'#4A90D9',success:'#2DBD7E',warning:'#C9972A',approval:'#8B6FD4',error:'#E05555'};
+  const icons = {info:'ti-info-circle',success:'ti-check',warning:'ti-alert-triangle',approval:'ti-clipboard-check',error:'ti-x'};
+  if (!notifs.length) { document.getElementById('notif-list').innerHTML = '<div class="empty">No notifications yet.</div>'; return; }
+  document.getElementById('notif-list').innerHTML = notifs.map(n => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);${n.read?'':'background:var(--s2);border-radius:6px;padding:8px;margin:-2px 0'}">
+      <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:${colors[n.type]||'#4A90D9'}22;color:${colors[n.type]||'#4A90D9'}"><i class="ti ${icons[n.type]||'ti-info-circle'}" style="font-size:14px"></i></div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:500;margin-bottom:2px;color:var(--text)">${n.title}</div><div style="font-size:11px;color:var(--t2)">${n.description||''}</div></div>
+      <div style="font-size:10px;color:var(--t2);flex-shrink:0">${fdate(n.created_at)}</div>
+    </div>`).join('');
+}
+async function markAllRead() { await api('/api/notifications/read-all', 'PUT'); renderNotifs(); }
+
+async function renderUsers() {
+  const users = await api('/api/users');
+  document.getElementById('utbody').innerHTML = users.map(u => `
+    <tr>
+      <td style="font-weight:500;color:var(--text)">${u.username}</td>
+      <td><span class="rbadge ${u.role==='admin'?'rb-admin':'rb-staff'}">${u.role}</span></td>
+      <td style="color:var(--t2)">${fdate(u.created_at)}</td>
+      <td>${u.username!==CU.username?`<button class="btn-d" onclick="delUser('${u.id}')">Remove</button>`:'<span style="font-size:10px;color:var(--t2)">(you)</span>'}</td>
+    </tr>`).join('');
+}
+async function addUser() {
+  const username = document.getElementById('nu').value.trim();
+  const password = document.getElementById('np').value;
+  const role = document.getElementById('nr').value;
+  const errEl = document.getElementById('uerr'); errEl.textContent = '';
+  if (!username || !password) { errEl.textContent = 'Username and password required'; return; }
+  try {
+    await api('/api/users', 'POST', { username, password, role });
+    document.getElementById('nu').value = ''; document.getElementById('np').value = '';
+    renderUsers(); showToast(`"${username}" added`);
+  } catch (e) { errEl.textContent = e.message; }
+}
+async function delUser(id) { await api(`/api/users/${id}`, 'DELETE'); renderUsers(); showToast('User removed'); }
+
+async function genInvite() {
+  const role = document.getElementById('inv-role').value;
+  const days = parseInt(document.getElementById('inv-exp').value);
+  const data = await api('/api/invites', 'POST', { role, days });
+  document.getElementById('inv-display').style.display = 'block';
+  document.getElementById('inv-code-box').textContent = data.code;
+  document.getElementById('inv-exp-lbl').textContent = `Role: ${role} Ã‚Â· Expires: ${new Date(data.expires_at).toLocaleDateString()} Ã‚Â· Share this code Ã¢â‚¬â€ users paste it on the Register screen`;
+  renderInvites(); showToast('Invite code generated!');
+}
+function cpInvite() { const c = document.getElementById('inv-code-box').textContent; navigator.clipboard.writeText(c).then(() => showToast('Code copied!')); }
+async function renderInvites() {
+  const invites = await api('/api/invites');
+  document.getElementById('inv-list').innerHTML = invites.length
+    ? invites.map(i => `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)"><div><span style="font-family:monospace;color:var(--gold2)">${i.code}</span> <span style="color:var(--t2)">(${i.role})</span></div><span style="color:var(--t2)">exp ${new Date(i.expires_at).toLocaleDateString()}</span></div>`).join('')
+    : '<div style="color:var(--t2)">No active invites</div>';
+}
+
+function showPwModal() { document.getElementById('pw-modal').style.display = 'block'; }
+function hidePwModal() { document.getElementById('pw-modal').style.display = 'none'; }
+async function changePassword() {
+  const cur = document.getElementById('pw-cur').value;
+  const nw = document.getElementById('pw-new').value;
+  const conf = document.getElementById('pw-conf').value;
+  const errEl = document.getElementById('pw-err'); errEl.textContent = '';
+  if (!cur || !nw || !conf) { errEl.textContent = 'All fields required'; return; }
+  if (nw !== conf) { errEl.textContent = 'New passwords do not match'; return; }
+  if (nw.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; return; }
+  try {
+    await api('/api/users/password', 'PUT', { current_password: cur, new_password: nw });
+    hidePwModal(); showToast('Password updated!');
+    document.getElementById('pw-cur').value = ''; document.getElementById('pw-new').value = ''; document.getElementById('pw-conf').value = '';
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+async function loadPhotos(){const g=document.getElementById('photo-grid');if(!g)return;try{const p=await api('/api/images');if(!p.length){g.innerHTML='<div class="empty">No photos yet.</div>';return;}g.innerHTML=p.map(x=>+''+<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden"><img src="${x.url}" style="width:100%;height:120px;object-fit:cover"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">+''+initApp();'{x.name}</div><button class="btn-o" style="font-size:10px;padding:2px 8px;margin-top:4px" onclick="navigator.clipboard.writeText('+''+initApp();{x.url}).then(()=>showToast('URL copied!'))">Copy URL</button></div></div>+''+).join('');}catch(e){g.innerHTML='<div class="empty">Could not load.</div>';}}async function uploadPhotos(input){const files=Array.from(input.files);const s=document.getElementById('upload-status');for(let i=0;i<files.length;i++){s.textContent=+''+Uploading +initApp();{i+1} of +initApp();{files.length}...+''+;const fd=new FormData();fd.append('file',files[i]);try{const r=await fetch(API+'/api/images/upload',{method:'POST',headers:{Authorization:+''+Bearer +initApp();{TOKEN}+''+},body:fd});if(!r.ok)throw new Error('Failed');}catch(e){showToast('Upload failed: '+e.message);}}s.textContent='';input.value='';showToast('Photos uploaded!');loadPhotos();}
+ initApp();
+</script>
+</body>
+</html>
+
+
+
+
