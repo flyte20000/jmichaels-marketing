@@ -167,18 +167,21 @@ export default {
           const parts = obj.key.split('/');
           const fname = parts[parts.length - 1];
           const fld = parts.length >= 3 ? parts.slice(1, -1).join('/') : '';
+          const takenAt = obj.customMetadata?.takenAt || null;
           return {
             key: obj.key,
             url: `${R2_PUBLIC}/${obj.key}`,
             size: obj.size,
             uploaded: obj.uploaded,
+            takenAt,
+            sortDate: takenAt || obj.uploaded,
             name: obj.customMetadata?.originalName || fname,
             uploadedBy: obj.customMetadata?.uploadedBy || '',
             folder: fld,
           };
         });
-      // Sort newest first by upload date
-      images.sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
+      // Sort newest first by date taken (falling back to upload date if no EXIF)
+      images.sort((a, b) => new Date(b.sortDate) - new Date(a.sortDate));
       return json(images);
     }
 
@@ -186,6 +189,7 @@ export default {
       const formData = await request.formData();
       const file = formData.get('file');
       const folder = (formData.get('folder') || 'Inbox').toString().trim() || 'Inbox';
+      const takenAt = (formData.get('taken_at') || '').toString().trim();
       if (!file) return err('No file provided');
       const ext = file.name.split('.').pop().toLowerCase();
       const allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -193,11 +197,13 @@ export default {
       if (file.size > 10 * 1024 * 1024) return err('File too large. Max 10MB');
       const safeFolder = folder.replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60) || 'Inbox';
       const key = `photos/${safeFolder}/${Date.now()}-${randId(6)}.${ext}`;
+      const cm = { uploadedBy: user.username, originalName: file.name, folder: safeFolder };
+      if (takenAt) cm.takenAt = takenAt;
       await env.IMAGES.put(key, file.stream(), {
         httpMetadata: { contentType: file.type },
-        customMetadata: { uploadedBy: user.username, originalName: file.name, folder: safeFolder },
+        customMetadata: cm,
       });
-      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name, folder: safeFolder });
+      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name, folder: safeFolder, takenAt: takenAt || null });
     }
 
     if (path.startsWith('/api/images/') && path.endsWith('/move') && method === 'POST') {

@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -924,9 +925,11 @@ async function pickerUpload(input) {
   const status = document.getElementById('picker-upload-status');
   const folder = document.getElementById('picker-folder').value || 'Inbox';
   status.textContent = `Uploading to ${folder}…`;
+  const takenAt = await extractTakenAt(file);
   const fd = new FormData();
   fd.append('file', file);
   fd.append('folder', folder);
+  if (takenAt) fd.append('taken_at', takenAt);
   try {
     const r = await fetch(API + '/api/images/upload', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
     if (!r.ok) throw new Error('Upload failed');
@@ -1613,15 +1616,30 @@ async function delPhoto(key, name) {
     }
   }
 }
+async function extractTakenAt(file) {
+  try {
+    if (typeof exifr === 'undefined') return null;
+    const meta = await exifr.parse(file, { pick: ['DateTimeOriginal', 'CreateDate', 'ModifyDate'] });
+    const d = meta?.DateTimeOriginal || meta?.CreateDate || meta?.ModifyDate;
+    if (d instanceof Date && !isNaN(d)) return d.toISOString();
+    if (typeof d === 'string') { const dd = new Date(d); if (!isNaN(dd)) return dd.toISOString(); }
+  } catch {}
+  // Fall back to the file's lastModified timestamp (often = date taken for camera files)
+  if (file.lastModified) return new Date(file.lastModified).toISOString();
+  return null;
+}
+
 async function uploadPhotos(input) {
   const files = Array.from(input.files);
   const s = document.getElementById('upload-status');
   const targetFolder = currentFolder || 'Inbox';
   for (let i = 0; i < files.length; i++) {
     s.textContent = `Uploading ${i+1} of ${files.length} to ${targetFolder}…`;
+    const takenAt = await extractTakenAt(files[i]);
     const fd = new FormData();
     fd.append('file', files[i]);
     fd.append('folder', targetFolder);
+    if (takenAt) fd.append('taken_at', takenAt);
     try {
       const r = await fetch(API + '/api/images/upload', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
       if (!r.ok) throw new Error('Failed');
