@@ -222,7 +222,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="qgrid" id="qgrid"></div>
           <div class="sec" style="margin-top:.75rem">Custom prompt</div>
           <div class="f"><textarea id="cprompt" rows="4" placeholder="Describe what you need…"></textarea></div>
-          <div class="f"><label>Platforms <span style="font-size:10px;color:var(--t2);font-weight:400">(pick one or more — saving creates one post per platform)</span></label>
+          <div class="f">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <label style="margin:0">Platforms <span style="font-size:10px;color:var(--t2);font-weight:400">(pick one or more)</span></label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);cursor:pointer;font-weight:400;margin:0"><input type="checkbox" id="tailor-toggle">Tailor each platform separately</label>
+            </div>
             <div id="gplat-group" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:9px 11px;background:var(--s2);border-radius:var(--rsm);border:1px solid var(--border)">
               <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="fb" checked>Facebook</label>
               <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="ig">Instagram</label>
@@ -523,6 +527,17 @@ let TOKEN = localStorage.getItem('jm_token');
 let CU = null;
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 let editPid = null, genOut = '', revOut = '', selectedPhotoUrl = '';
+let genOutByPlatform = {}; // {fb: '...', ig: '...'} — populated by genContent
+
+const platTailorGuide = {
+  fb: 'Facebook: 1-3 short paragraphs, conversational, story-friendly, light emojis.',
+  ig: 'Instagram: visual-first hook, 3-5 relevant hashtags at the end.',
+  em: 'Email newsletter: start with "Subject: [subject line]" on its own line, then a 3-5 sentence body.',
+  gg: 'Google Business: 1-2 informative sentences, professional, no hashtags.',
+  sms: 'SMS / Text: under 160 characters, no emojis, no hashtags, plain and direct.',
+  yelp: `Yelp response: 2-4 sentences responding to a review, sign off as "The J Michael's Team".`,
+  trip: `TripAdvisor response: 2-4 sentences responding to a review, sign off as "The J Michael's Team".`,
+};
 let engChart = null, scoreChart = null;
 
 const pnames = {fb:'Facebook',ig:'Instagram',em:'Email',gg:'Google',yelp:'Yelp',sms:'SMS',trip:'TripAdvisor'};
@@ -725,6 +740,7 @@ async function genContent() {
   const plats = getSelectedPlatforms();
   const platNames = plats.map(p => pnames[p] || p).join(', ');
   const tone = document.getElementById('gtone').value;
+  const tailor = document.getElementById('tailor-toggle').checked && plats.length > 1;
   if (!prompt) { showToast('Enter a prompt first'); return; }
   const btn = document.getElementById('btngen');
   const out = document.getElementById('outbox');
@@ -733,26 +749,59 @@ async function genContent() {
   out.innerHTML = '<span style="color:var(--t2);font-style:italic">Writing…</span>';
   document.getElementById('gen-conf').textContent = '';
   try {
+    if (tailor) {
+      const guide = plats.map(p => `- "${p}" — ${platTailorGuide[p] || pnames[p]}`).join('\n');
+      const jsonShape = '{' + plats.map(p => `"${p}":"…"`).join(',') + '}';
+      const raw = await callClaude(
+        `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL — an upscale-casual restaurant and bar beloved by locals. Write authentic, vivid, genuine content that never sounds like generic AI.`,
+        `Write ${plats.length} versions of this post, one per platform, each tailored to that platform's audience and constraints.\n\nPlatform guidelines:\n${guide}\n\nReturn ONLY valid minified JSON in this exact shape (no markdown, no code fences, no preamble): ${jsonShape}\n\nTone: ${tone}\n\nPrompt: ${prompt}`,
+        1800
+      );
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+      let parsed;
+      try { parsed = JSON.parse(cleaned); } catch { throw new Error('Could not parse tailored output'); }
+      genOutByPlatform = {};
+      plats.forEach(p => { if (parsed[p]) genOutByPlatform[p] = String(parsed[p]).trim(); });
+      genOut = '';
+      out.innerHTML = plats.map((p, i) => `<div style="margin-bottom:14px;padding-bottom:10px;${i < plats.length-1 ? 'border-bottom:1px dashed var(--border)' : ''}"><div style="font-size:10px;color:var(--gold2);font-weight:500;letter-spacing:1.5px;margin-bottom:6px;text-transform:uppercase">${pnames[p]||p}</div><div style="white-space:pre-wrap;font-size:12px;line-height:1.7">${(genOutByPlatform[p]||'(no content)').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`).join('');
+      btn.disabled = false;
+      btn.textContent = 'Generate Content';
+      return;
+    }
     genOut = await callClaude(
       `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL — an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified tone. When multiple platforms are listed, write ONE post that works for all of them (keep it short enough for the most restrictive — under 160 chars if SMS is included). Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
       `Platforms: ${platNames}\nTone: ${tone}\n\n${prompt}`
     );
+    genOutByPlatform = {};
+    plats.forEach(p => genOutByPlatform[p] = genOut);
     out.textContent = genOut;
-  } catch { out.innerHTML = '<span style="color:var(--red)">Error generating. Please try again.</span>'; }
+  } catch (e) { out.innerHTML = '<span style="color:var(--red)">Error generating: ' + (e.message || '') + '</span>'; }
   btn.disabled = false;
   btn.textContent = 'Generate Content';
 }
 
 function copyOut() {
-  if (!genOut) { showToast('Nothing to copy'); return; }
-  navigator.clipboard.writeText(genOut).then(() => showToast('Copied!'));
+  if (genOut) {
+    navigator.clipboard.writeText(genOut).then(() => showToast('Copied!'));
+    return;
+  }
+  const plats = getSelectedPlatforms().filter(p => genOutByPlatform[p]);
+  if (!plats.length) { showToast('Nothing to copy'); return; }
+  const text = plats.map(p => `=== ${pnames[p]||p} ===\n${genOutByPlatform[p]}`).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Copied all platforms!'));
+}
+
+function hasGeneratedContent() {
+  return Object.keys(genOutByPlatform).length > 0 || !!genOut;
 }
 
 async function saveToLib() {
-  if (!genOut) { showToast('Generate content first'); return; }
+  if (!hasGeneratedContent()) { showToast('Generate content first'); return; }
   const plats = getSelectedPlatforms();
   for (const p of plats) {
-    await api('/api/library', 'POST', { content: genOut, platform: p, image_url: selectedPhotoUrl });
+    const content = genOutByPlatform[p] || genOut;
+    if (!content) continue;
+    await api('/api/library', 'POST', { content, platform: p, image_url: selectedPhotoUrl });
   }
   const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
   showToast('Saved to library!');
@@ -761,11 +810,13 @@ async function saveToLib() {
 }
 
 async function saveToCalendar() {
-  if (!genOut) { showToast('Generate content first'); return; }
+  if (!hasGeneratedContent()) { showToast('Generate content first'); return; }
   const plats = getSelectedPlatforms();
   const date = new Date().toISOString().split('T')[0];
   for (const p of plats) {
-    await api('/api/posts', 'POST', { date, platform: p, content: genOut, status: 'draft', image_url: selectedPhotoUrl });
+    const content = genOutByPlatform[p] || genOut;
+    if (!content) continue;
+    await api('/api/posts', 'POST', { date, platform: p, content, status: 'draft', image_url: selectedPhotoUrl });
   }
   const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
   showToast('Added to calendar!');
@@ -775,10 +826,12 @@ async function saveToCalendar() {
 }
 
 async function submitApproval() {
-  if (!genOut) { showToast('Generate content first'); return; }
+  if (!hasGeneratedContent()) { showToast('Generate content first'); return; }
   const plats = getSelectedPlatforms();
   for (const p of plats) {
-    await api('/api/approvals', 'POST', { content: genOut, platform: p, image_url: selectedPhotoUrl });
+    const content = genOutByPlatform[p] || genOut;
+    if (!content) continue;
+    await api('/api/approvals', 'POST', { content, platform: p, image_url: selectedPhotoUrl });
   }
   await api('/api/notifications', 'POST', { title: 'New approval request', description: CU.username + ' submitted content for approval' + (plats.length > 1 ? ` (${plats.length} platforms)` : ''), type: 'approval' });
   const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
@@ -1235,7 +1288,7 @@ async function renderLibrary() {
 async function useLibItem(id) {
   const lib = await api('/api/library');
   const item = lib.find(x => x.id === id);
-  if (item) { genOut = item.content; document.getElementById('outbox').textContent = item.content; switchTab('generate'); showToast('Loaded into Generate tab'); }
+  if (item) { genOut = item.content; genOutByPlatform = {}; getSelectedPlatforms().forEach(p => genOutByPlatform[p] = item.content); document.getElementById('outbox').textContent = item.content; switchTab('generate'); showToast('Loaded into Generate tab'); }
 }
 async function delLib(id) { await api(`/api/library/${id}`, 'DELETE'); renderLibrary(); }
 
