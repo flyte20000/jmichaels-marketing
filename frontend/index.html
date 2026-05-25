@@ -222,8 +222,16 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="qgrid" id="qgrid"></div>
           <div class="sec" style="margin-top:.75rem">Custom prompt</div>
           <div class="f"><textarea id="cprompt" rows="4" placeholder="Describe what you need…"></textarea></div>
-          <div class="f"><label>Platform</label>
-            <select id="gplat"><option>Facebook</option><option>Instagram</option><option>Email newsletter</option><option>Google Business</option><option>SMS / Text</option><option>Yelp response</option><option>TripAdvisor response</option><option>All platforms</option></select>
+          <div class="f"><label>Platforms <span style="font-size:10px;color:var(--t2);font-weight:400">(pick one or more — saving creates one post per platform)</span></label>
+            <div id="gplat-group" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:9px 11px;background:var(--s2);border-radius:var(--rsm);border:1px solid var(--border)">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="fb" checked>Facebook</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="ig">Instagram</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="em">Email</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="gg">Google</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="sms">SMS</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="yelp">Yelp</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="trip">TripAdvisor</label>
+            </div>
           </div>
           <div class="f"><label>Tone</label>
             <select id="gtone"><option>Warm & inviting</option><option>Upbeat & fun</option><option>Professional</option><option>Urgent / Limited time</option><option>Storytelling</option></select>
@@ -707,9 +715,15 @@ async function aiFillCampaignDesc() {
   btn.textContent = orig;
 }
 
+function getSelectedPlatforms() {
+  const checked = [...document.querySelectorAll('.gplat-cb:checked')].map(c => c.value);
+  return checked.length ? checked : ['fb'];
+}
+
 async function genContent() {
   const prompt = document.getElementById('cprompt').value.trim();
-  const plat = document.getElementById('gplat').value;
+  const plats = getSelectedPlatforms();
+  const platNames = plats.map(p => pnames[p] || p).join(', ');
   const tone = document.getElementById('gtone').value;
   if (!prompt) { showToast('Enter a prompt first'); return; }
   const btn = document.getElementById('btngen');
@@ -720,8 +734,8 @@ async function genContent() {
   document.getElementById('gen-conf').textContent = '';
   try {
     genOut = await callClaude(
-      `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL — an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified platform and tone. Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
-      `Platform: ${plat}\nTone: ${tone}\n\n${prompt}`
+      `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL — an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified tone. When multiple platforms are listed, write ONE post that works for all of them (keep it short enough for the most restrictive — under 160 chars if SMS is included). Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
+      `Platforms: ${platNames}\nTone: ${tone}\n\n${prompt}`
     );
     out.textContent = genOut;
   } catch { out.innerHTML = '<span style="color:var(--red)">Error generating. Please try again.</span>'; }
@@ -736,32 +750,40 @@ function copyOut() {
 
 async function saveToLib() {
   if (!genOut) { showToast('Generate content first'); return; }
-  await api('/api/library', 'POST', { content: genOut, platform: platMap[document.getElementById('gplat').value] || 'fb', image_url: selectedPhotoUrl });
+  const plats = getSelectedPlatforms();
+  for (const p of plats) {
+    await api('/api/library', 'POST', { content: genOut, platform: p, image_url: selectedPhotoUrl });
+  }
+  const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
   showToast('Saved to library!');
-  document.getElementById('gen-conf').textContent = 'Saved to Content Library' + (selectedPhotoUrl ? ' (with photo)' : '');
+  document.getElementById('gen-conf').textContent = 'Saved to Content Library' + suffix;
   clearGenPhoto();
 }
 
 async function saveToCalendar() {
   if (!genOut) { showToast('Generate content first'); return; }
-  await api('/api/posts', 'POST', {
-    date: new Date().toISOString().split('T')[0],
-    platform: platMap[document.getElementById('gplat').value] || 'fb',
-    content: genOut,
-    status: 'draft',
-    image_url: selectedPhotoUrl,
-  });
+  const plats = getSelectedPlatforms();
+  const date = new Date().toISOString().split('T')[0];
+  for (const p of plats) {
+    await api('/api/posts', 'POST', { date, platform: p, content: genOut, status: 'draft', image_url: selectedPhotoUrl });
+  }
+  const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
   showToast('Added to calendar!');
-  document.getElementById('gen-conf').textContent = 'Added to Calendar as draft' + (selectedPhotoUrl ? ' (with photo)' : '');
+  document.getElementById('gen-conf').textContent = 'Added to Calendar as draft' + suffix;
   clearGenPhoto();
+  renderCalendar();
 }
 
 async function submitApproval() {
   if (!genOut) { showToast('Generate content first'); return; }
-  await api('/api/approvals', 'POST', { content: genOut, platform: document.getElementById('gplat').value, image_url: selectedPhotoUrl });
-  await api('/api/notifications', 'POST', { title: 'New approval request', description: CU.username + ' submitted content for approval', type: 'approval' });
+  const plats = getSelectedPlatforms();
+  for (const p of plats) {
+    await api('/api/approvals', 'POST', { content: genOut, platform: p, image_url: selectedPhotoUrl });
+  }
+  await api('/api/notifications', 'POST', { title: 'New approval request', description: CU.username + ' submitted content for approval' + (plats.length > 1 ? ` (${plats.length} platforms)` : ''), type: 'approval' });
+  const suffix = (plats.length > 1 ? ` (${plats.length} platforms)` : '') + (selectedPhotoUrl ? ' with photo' : '');
   showToast('Submitted for approval!');
-  document.getElementById('gen-conf').textContent = 'Submitted for Admin approval' + (selectedPhotoUrl ? ' (with photo)' : '');
+  document.getElementById('gen-conf').textContent = 'Submitted for Admin approval' + suffix;
   clearGenPhoto();
   renderApprovals();
 }
