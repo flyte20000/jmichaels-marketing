@@ -264,9 +264,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
             <button class="btn-o" onclick="saveToCalendar()">Add to Calendar</button>
             <button class="btn-o" onclick="submitApproval()">Submit for Approval</button>
             <button class="btn-o" id="send-email-btn" style="display:none" onclick="openSendEmail()">📤 Send Email Now</button>
+            <button class="btn-o" id="send-sms-btn" style="display:none" onclick="openSendSms()">💬 Send SMS Now</button>
           </div>
           <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- SEND SMS MODAL -->
+    <div id="send-sms-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1050;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;max-width:560px;width:100%;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div class="sec" style="margin:0">Send SMS</div>
+          <button class="bsm" onclick="closeSendSms()">✕</button>
+        </div>
+        <div class="f"><label>Message <span id="sms-char-count" style="font-size:10px;color:var(--t2);font-weight:400;margin-left:6px">0 / 160</span></label><textarea id="sms-body" rows="5" placeholder="Short, plain text. SMS doesn't render emojis well on all carriers." oninput="updateSmsCharCount()"></textarea></div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);cursor:pointer;margin-bottom:10px"><input type="checkbox" id="sms-append-optout" checked>Auto-append "Reply STOP to opt out." (TCPA recommended)</label>
+        <div class="g2" style="gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>Send to</label>
+            <select id="sms-recipients" onchange="onSmsRecipChange()">
+              <option value="all">All opted-in contacts</option>
+              <option value="tag">Filter by tag</option>
+            </select>
+          </div>
+          <div class="f" id="sms-tag-wrap" style="margin:0;display:none"><label>Tag</label>
+            <select id="sms-tag" onchange="updateSmsPreview()"></select>
+          </div>
+        </div>
+        <div id="sms-preview" style="background:var(--s2);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--t2);margin-bottom:1rem">Calculating recipients…</div>
+        <div style="background:var(--s2);border-left:3px solid var(--orange);padding:8px 12px;font-size:11px;color:var(--t2);margin-bottom:1rem;border-radius:0 var(--rsm) var(--rsm) 0">
+          📞 Sending from <strong>+1 (772) 291-0845</strong>. Twilio trial mode can only message verified numbers — add test numbers in Twilio Console → Phone Numbers → Verified Caller IDs. Upgrading removes that limit. Each SMS costs ~$0.0079.
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-o" onclick="closeSendSms()">Cancel</button>
+          <button class="btn-add" id="sms-send-btn" onclick="confirmSendSms()">Send</button>
+        </div>
+        <div id="sms-status" style="margin-top:10px;font-size:11px;color:var(--t2)"></div>
       </div>
     </div>
 
@@ -851,10 +884,100 @@ function getSelectedPlatforms() {
 
 function updateSendEmailButton() {
   const btn = document.getElementById('send-email-btn');
-  if (!btn) return;
-  const hasEmail = getSelectedPlatforms().includes('em');
+  const smsBtn = document.getElementById('send-sms-btn');
+  if (!btn || !smsBtn) return;
+  const plats = getSelectedPlatforms();
   const hasContent = Object.keys(genOutByPlatform).length > 0 || !!genOut;
-  btn.style.display = (hasEmail && hasContent) ? 'inline-block' : 'none';
+  btn.style.display = (plats.includes('em') && hasContent) ? 'inline-block' : 'none';
+  smsBtn.style.display = (plats.includes('sms') && hasContent) ? 'inline-block' : 'none';
+}
+
+function updateSmsCharCount() {
+  const body = document.getElementById('sms-body').value;
+  const appendOpt = document.getElementById('sms-append-optout').checked;
+  const total = body.length + (appendOpt ? '\n\nReply STOP to opt out.'.length : 0);
+  const cc = document.getElementById('sms-char-count');
+  const segs = Math.ceil(total / 160) || 1;
+  cc.textContent = `${total} / 160${total > 160 ? ` (${segs} segments)` : ''}`;
+  cc.style.color = total > 1600 ? 'var(--red)' : (total > 160 ? 'var(--orange)' : 'var(--t2)');
+}
+
+async function openSendSms() {
+  const smsContent = genOutByPlatform['sms'] || genOut || '';
+  if (!smsContent.trim()) { showToast('Generate content first'); return; }
+  document.getElementById('sms-body').value = smsContent;
+  updateSmsCharCount();
+  document.getElementById('sms-status').textContent = '';
+  document.getElementById('send-sms-modal').style.display = 'flex';
+  try {
+    const contacts = await api('/api/contacts');
+    const tags = new Set();
+    contacts.forEach(c => (c.tags || '').split(',').map(s => s.trim()).filter(Boolean).forEach(t => tags.add(t)));
+    const tagSel = document.getElementById('sms-tag');
+    tagSel.innerHTML = [...tags].sort().map(t => `<option value="${t}">${t}</option>`).join('');
+  } catch {}
+  // Re-render char count when opt-out toggle changes
+  document.getElementById('sms-append-optout').onchange = updateSmsCharCount;
+  updateSmsPreview();
+}
+
+function closeSendSms() { document.getElementById('send-sms-modal').style.display = 'none'; }
+
+function onSmsRecipChange() {
+  const v = document.getElementById('sms-recipients').value;
+  document.getElementById('sms-tag-wrap').style.display = v === 'tag' ? '' : 'none';
+  updateSmsPreview();
+}
+
+async function updateSmsPreview() {
+  const recipients = document.getElementById('sms-recipients').value;
+  const tag = document.getElementById('sms-tag').value || '';
+  const prev = document.getElementById('sms-preview');
+  prev.textContent = 'Calculating recipients…';
+  try {
+    const r = await api('/api/send/sms/preview', 'POST', { recipients, tag });
+    if (r.count === 0) {
+      prev.innerHTML = '<span style="color:var(--red)">No opted-in SMS contacts match.</span>';
+    } else {
+      const sample = r.sample.slice(0, 3).join(', ') + (r.count > 3 ? `, +${r.count - 3} more` : '');
+      prev.innerHTML = `Will send to <strong style="color:var(--text)">${r.count}</strong> opted-in contact${r.count !== 1 ? 's' : ''}: <span style="color:var(--t2)">${escapeHtml(sample)}</span>`;
+    }
+  } catch (e) {
+    prev.textContent = 'Could not preview';
+  }
+}
+
+async function confirmSendSms() {
+  const payload = {
+    body: document.getElementById('sms-body').value.trim(),
+    recipients: document.getElementById('sms-recipients').value,
+    tag: document.getElementById('sms-tag').value || '',
+    append_optout: document.getElementById('sms-append-optout').checked,
+  };
+  if (!payload.body) { showToast('Message required'); return; }
+  const prevText = document.getElementById('sms-preview').textContent;
+  const recipMatch = prevText.match(/Will send to (\d+)/);
+  const count = recipMatch ? recipMatch[1] : '?';
+  if (!confirm(`Send this SMS to ${count} contact${count !== '1' ? 's' : ''}?\n\nMessages cost ~$0.0079 each. This cannot be undone.`)) return;
+  const btn = document.getElementById('sms-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const status = document.getElementById('sms-status');
+  status.textContent = '';
+  try {
+    const r = await api('/api/send/sms', 'POST', payload);
+    let msg = `Sent ${r.sent} of ${r.attempted} attempted`;
+    if (r.remaining) msg += ` (${r.remaining} more in queue — click Send again to continue)`;
+    if (r.failed) msg += `. ${r.failed} failed.${r.errors?.length ? ' ' + r.errors[0] : ''}`;
+    const color = r.failed ? (r.sent ? 'var(--orange)' : 'var(--red)') : 'var(--green)';
+    status.innerHTML = `<span style="color:${color}">${r.failed ? '' : '✓ '}${msg}</span>`;
+    if (r.sent && !r.failed) {
+      showToast(`Sent ${r.sent} SMS`);
+      if (!r.remaining) setTimeout(() => closeSendSms(), 2500);
+    }
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--red)">Send failed</span>`;
+  }
+  btn.disabled = false; btn.textContent = 'Send';
 }
 
 async function openSendEmail() {

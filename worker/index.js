@@ -663,6 +663,91 @@ export default {
       return json({ success: failed === 0, sent, failed, total: contacts.length, errors: errors.slice(0, 3) });
     }
 
+    if (path === '/api/send/sms/preview' && method === 'POST') {
+      const { recipients, tag } = body;
+      const { results: all } = await db.prepare('SELECT id, name, phone, tags FROM contacts WHERE opt_in_sms = 1 AND phone != ""').all();
+      let contacts = all;
+      if (recipients === 'tag' && tag) {
+        const t = tag.toLowerCase();
+        contacts = all.filter(r => (r.tags || '').toLowerCase().split(',').map(s => s.trim()).includes(t));
+      }
+      return json({ count: contacts.length, sample: contacts.slice(0, 5).map(c => c.phone) });
+    }
+
+    if (path === '/api/send/sms' && method === 'POST') {
+      if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_FROM_NUMBER) {
+        return err('SMS not configured', 500);
+      }
+      const { body: smsBody, recipients, tag, append_optout } = body;
+      if (!smsBody || !smsBody.trim()) return err('Body required');
+      const finalBody = (append_optout === false)
+        ? smsBody.trim()
+        : (smsBody.trim() + '\n\nReply STOP to opt out.');
+      if (finalBody.length > 1600) return err('Message too long (max ~1600 chars)');
+
+      const { results: all } = await db.prepare('SELECT id, name, phone, tags FROM contacts WHERE opt_in_sms = 1 AND phone != ""').all();
+      let contacts = all;
+      if (recipients === 'tag' && tag) {
+        const t = tag.toLowerCase();
+        contacts = all.filter(r => (r.tags || '').toLowerCase().split(',').map(s => s.trim()).includes(t));
+      }
+      if (!contacts.length) return err('No opted-in recipients match');
+
+      const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`;
+      const auth = 'Basic ' + btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
+
+      let sent = 0, failed = 0;
+      const errors = [];
+      // Twilio has no batch API for SMS; send sequentially. Limit to 50 per call
+      // to stay well under Worker CPU budget. UI should chunk larger lists.
+      const limit = Math.min(contacts.length, 50);
+      for (let i = 0; i < limit; i++) {
+        const c = contacts[i];
+        // Normalize phone: strip non-digits, prepend +1 if 10 digits
+        let to = String(c.phone).trim();
+        const digits = to.replace(/\D/g, '');
+        if (!to.startsWith('+')) {
+          if (digits.length === 10) to = '+1' + digits;
+          else if (digits.length === 11 && digits.startsWith('1')) to = '+' + digits;
+          else { failed++; errors.push(`Invalid phone for ${c.name || c.phone}`); continue; }
+        }
+        const form = new URLSearchParams();
+        form.append('From', env.TWILIO_FROM_NUMBER);
+        form.append('To', to);
+        form.append('Body', finalBody);
+        try {
+          const r = await fetch(twilioUrl, {
+            method: 'POST',
+            headers: {
+              'Authorization': auth,
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: form.toString(),
+          });
+          if (r.ok) {
+            sent++;
+          } else {
+            const data = await r.json().catch(() => ({}));
+            failed++;
+            if (errors.length < 3) errors.push(data.message || `HTTP ${r.status}`);
+          }
+        } catch (e) {
+          failed++;
+          if (errors.length < 3) errors.push(e.message);
+        }
+      }
+
+      return json({
+        success: failed === 0,
+        sent,
+        failed,
+        total: contacts.length,
+        attempted: limit,
+        remaining: contacts.length - limit,
+        errors,
+      });
+    }
+
     if (path === '/api/contacts/import' && method === 'POST') {
       const { rows } = body; // array of {name, email, phone, tags, source, notes}
       if (!Array.isArray(rows) || !rows.length) return err('rows array required');
