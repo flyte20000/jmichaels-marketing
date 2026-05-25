@@ -1405,22 +1405,31 @@ async function loadPhotos() {
   try {
     const p = await api('/api/images');
     if (!p.length) { g.innerHTML = '<div class="empty">No photos yet.</div>'; return; }
+    const isAdmin = CU && CU.role === 'admin';
     g.innerHTML = p.map(x => {
       const safeKey = x.key.replace(/'/g, "\\'");
       const safeName = (x.name || '').replace(/'/g, "\\'");
-      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" oncontextmenu="event.preventDefault();delPhoto('${safeKey}','${safeName}')"><img src="${x.url}" style="width:100%;height:120px;object-fit:cover" title="Right-click to delete"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy URL</button><button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Delete</button></div></div></div>`;
+      const ctx = isAdmin ? `oncontextmenu="event.preventDefault();delPhoto('${safeKey}','${safeName}')"` : '';
+      const delBtn = isAdmin ? `<button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Delete</button>` : '';
+      const imgTitle = isAdmin ? 'Right-click to delete' : '';
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" ${ctx}><img src="${x.url}" style="width:100%;height:120px;object-fit:cover" title="${imgTitle}"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy URL</button>${delBtn}</div></div></div>`;
     }).join('');
   } catch (e) { g.innerHTML = '<div class="empty">Could not load.</div>'; }
 }
 
 async function delPhoto(key, name) {
-  if (!confirm(`Delete "${name || key}" from storage? This cannot be undone.`)) return;
+  if (CU && CU.role !== 'admin') { alert('Only admins can delete photos.'); return; }
+  if (!confirm(`Delete "${name || key}" from storage?\n\nThis is permanent and cannot be undone.`)) return;
+  if (!confirm(`Are you absolutely sure?\n\nThis will permanently remove the photo from R2 storage.`)) return;
   try {
     await api('/api/images/' + encodeURIComponent(key), 'DELETE');
     showToast('Photo deleted');
     loadPhotos();
   } catch (e) {
-    showToast('Delete failed: ' + (e.message || ''));
+    // api() already showed the toast; if the error mentions "attached to", show a clearer alert too
+    if (e.message && e.message.includes('attached to')) {
+      alert('Cannot delete this photo.\n\n' + e.message);
+    }
   }
 }
 async function uploadPhotos(input) {

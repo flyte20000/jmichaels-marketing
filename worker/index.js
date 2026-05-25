@@ -187,8 +187,22 @@ export default {
     }
 
     if (path.startsWith('/api/images/') && method === 'DELETE') {
-      if (user.role !== 'admin') return err('Forbidden', 403);
+      if (user.role !== 'admin') return err('Admin only', 403);
       const key = decodeURIComponent(path.slice('/api/images/'.length));
+      const fullUrl = `${R2_PUBLIC}/${key}`;
+      // Block deletion if the photo is referenced by any post, library item, or approval
+      const [postsRef, libRef, apprRef] = await Promise.all([
+        db.prepare('SELECT COUNT(*) AS n FROM posts WHERE image_url = ?').bind(fullUrl).first(),
+        db.prepare('SELECT COUNT(*) AS n FROM library WHERE image_url = ?').bind(fullUrl).first(),
+        db.prepare('SELECT COUNT(*) AS n FROM approvals WHERE image_url = ?').bind(fullUrl).first(),
+      ]);
+      const inUse = [];
+      if (postsRef.n > 0) inUse.push(`${postsRef.n} calendar post${postsRef.n>1?'s':''}`);
+      if (libRef.n > 0) inUse.push(`${libRef.n} library item${libRef.n>1?'s':''}`);
+      if (apprRef.n > 0) inUse.push(`${apprRef.n} approval${apprRef.n>1?'s':''}`);
+      if (inUse.length) {
+        return json({ error: `This photo is attached to ${inUse.join(', ')}. Delete those first, then you can remove the photo.` }, 409);
+      }
       await env.IMAGES.delete(key);
       return json({ success: true });
     }
