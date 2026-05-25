@@ -274,17 +274,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="sec" style="margin:0">Choose a photo</div>
           <button class="bsm" onclick="closePhotoPicker()">✕</button>
         </div>
-        <div style="margin-bottom:.75rem">
-          <button class="btn-add" onclick="document.getElementById('picker-upload').click()">Upload new photo</button>
-          <input type="file" id="picker-upload" accept="image/*" style="display:none" onchange="pickerUpload(this)">
-          <span id="picker-upload-status" style="font-size:11px;color:var(--t2);margin-left:8px"></span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;gap:10px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:11px;color:var(--t2);margin:0">Folder:</label>
+            <select id="picker-folder" onchange="openPhotoPicker()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 8px;color:var(--text);font-size:12px"></select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="picker-upload-status" style="font-size:11px;color:var(--t2)"></span>
+            <button class="btn-add" onclick="document.getElementById('picker-upload').click()">Upload new photo</button>
+            <input type="file" id="picker-upload" accept="image/*" style="display:none" onchange="pickerUpload(this)">
+          </div>
         </div>
         <div id="picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;overflow-y:auto;flex:1;padding:4px"></div>
       </div>
     </div>
 
     <!-- PHOTOS -->
-<div class="panel" id="panel-photos"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><div class="sec" style="margin:0">Photo Library</div><div style="display:flex;align-items:center;gap:8px"><span id="upload-status" style="font-size:11px;color:var(--t2)"></span><button class="btn-add" onclick="document.getElementById('photo-file').click()">Upload Photos</button><input type="file" id="photo-file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(this)"></div></div><div id="photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:1rem"></div></div>
+<div class="panel" id="panel-photos">
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:1rem">
+    <div class="card" style="padding:.75rem">
+      <div class="sec" style="margin-bottom:.5rem">Folders</div>
+      <div id="folder-list" style="display:flex;flex-direction:column;gap:2px;margin-bottom:.5rem"></div>
+      <button class="btn-o" style="width:100%;font-size:11px;padding:5px" onclick="createFolder()">+ New Folder</button>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="sec" id="photo-folder-title" style="margin:0">All photos</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span id="upload-status" style="font-size:11px;color:var(--t2)"></span>
+          <button class="btn-add" onclick="document.getElementById('photo-file').click()">Upload Photos</button>
+          <input type="file" id="photo-file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(this)">
+        </div>
+      </div>
+      <div id="photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
+    </div>
+  </div>
+</div>
 <!-- CALENDAR -->
     <div class="panel" id="panel-calendar">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
@@ -662,7 +687,7 @@ function switchTab(t) {
   if (t === 'analytics') renderAnalytics();
   if (t === 'scores') renderScoreHistory();
   if (t === 'reminders') renderReminders();
-  if (t === 'photos') loadPhotos();
+  if (t === 'photos') { renderFolders(); loadPhotos(); }
   if (t === 'notifications') { renderNotifs(); markAllRead(); }
   if (t === 'users' && CU.role === 'admin') { renderUsers(); renderInvites(); }
 }
@@ -848,16 +873,27 @@ async function submitApproval() {
 async function openPhotoPicker() {
   document.getElementById('photo-picker-modal').style.display = 'flex';
   const grid = document.getElementById('picker-grid');
+  const folderSel = document.getElementById('picker-folder');
   grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">Loading photos…</div>';
   try {
-    const photos = await api('/api/images');
+    // Populate folder dropdown (preserve current selection if possible)
+    if (!allFolders.length || !folderSel.options.length) {
+      try { allFolders = await api('/api/folders'); } catch {}
+      const cur = folderSel.value;
+      folderSel.innerHTML = '<option value="">All photos</option>' + allFolders.map(f => `<option value="${f.name}">${f.name} (${f.count||0})</option>`).join('');
+      if (cur) folderSel.value = cur;
+    }
+    const f = folderSel.value;
+    const qs = f ? '?folder=' + encodeURIComponent(f) : '';
+    const photos = await api('/api/images' + qs);
     if (!photos.length) {
-      grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">No photos yet — upload one above.</div>';
+      grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">No photos in this folder — upload one above.</div>';
       return;
     }
     grid.innerHTML = photos.map(p => `
-      <div onclick="selectPhoto('${p.url}')" style="cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+      <div onclick="selectPhoto('${p.url}')" style="cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;transition:border-color .15s;position:relative" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
         <img src="${p.url}" style="width:100%;height:100px;object-fit:cover;display:block">
+        ${p.folder ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:var(--gold2);font-size:9px;padding:2px 4px;letter-spacing:1px">${p.folder}</div>` : ''}
       </div>
     `).join('');
   } catch (e) {
@@ -886,9 +922,11 @@ async function pickerUpload(input) {
   const file = input.files[0];
   if (!file) return;
   const status = document.getElementById('picker-upload-status');
-  status.textContent = 'Uploading…';
+  const folder = document.getElementById('picker-folder').value || 'Inbox';
+  status.textContent = `Uploading to ${folder}…`;
   const fd = new FormData();
   fd.append('file', file);
+  fd.append('folder', folder);
   try {
     const r = await fetch(API + '/api/images/upload', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
     if (!r.ok) throw new Error('Upload failed');
@@ -1402,20 +1440,105 @@ async function changePassword() {
   } catch (e) { errEl.textContent = e.message; }
 }
 
+let currentFolder = ''; // '' means "All photos"
+let allFolders = []; // cached folder list
+
+async function renderFolders() {
+  try {
+    allFolders = await api('/api/folders');
+  } catch (e) { allFolders = []; }
+  const fl = document.getElementById('folder-list');
+  if (!fl) return;
+  const isAdmin = CU && CU.role === 'admin';
+  const allCount = allFolders.reduce((s, f) => s + (f.count || 0), 0);
+  const rows = [{ name: '', label: 'All photos', count: allCount }].concat(allFolders.map(f => ({ name: f.name, label: f.name, count: f.count || 0 })));
+  fl.innerHTML = rows.map(r => {
+    const active = r.name === currentFolder;
+    const safe = r.name.replace(/'/g, "\\'");
+    const actions = (isAdmin && r.name && r.name !== 'Inbox') ? `<span onclick="event.stopPropagation();renameFolder('${safe}')" title="Rename" style="cursor:pointer;color:var(--t2);font-size:10px;padding:0 4px">✎</span><span onclick="event.stopPropagation();deleteFolder('${safe}')" title="Delete" style="cursor:pointer;color:var(--t2);font-size:10px;padding:0 4px">×</span>` : '';
+    return `<div onclick="selectFolder('${safe}')" style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:12px;${active ? 'background:var(--gold);color:#1a1a1a;font-weight:500' : 'color:var(--text)'};transition:background .1s" onmouseover="if(!${active})this.style.background='var(--s2)'" onmouseout="if(!${active})this.style.background='transparent'">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.label}</span>
+      <span style="display:flex;align-items:center;gap:2px">${actions}<span style="font-size:10px;opacity:.7;margin-left:4px">${r.count}</span></span>
+    </div>`;
+  }).join('');
+}
+
+async function selectFolder(name) {
+  currentFolder = name;
+  document.getElementById('photo-folder-title').textContent = name || 'All photos';
+  renderFolders();
+  loadPhotos();
+}
+
+async function createFolder() {
+  if (CU && CU.role !== 'admin') { alert('Only admins can create folders.'); return; }
+  const name = prompt('New folder name (letters, numbers, spaces, _ or - only):');
+  if (!name) return;
+  try {
+    const r = await api('/api/folders', 'POST', { name: name.trim() });
+    showToast(`Folder "${r.name}" created`);
+    await renderFolders();
+    selectFolder(r.name);
+  } catch (e) { /* api() already toasted */ }
+}
+
+async function renameFolder(oldName) {
+  if (CU && CU.role !== 'admin') return;
+  const newName = prompt(`Rename "${oldName}" to:`, oldName);
+  if (!newName || newName.trim() === oldName) return;
+  try {
+    const r = await api('/api/folders/' + encodeURIComponent(oldName), 'PUT', { name: newName.trim() });
+    showToast(`Renamed to "${r.name}"`);
+    if (currentFolder === oldName) currentFolder = r.name;
+    await renderFolders();
+    loadPhotos();
+  } catch (e) {}
+}
+
+async function deleteFolder(name) {
+  if (CU && CU.role !== 'admin') return;
+  if (!confirm(`Delete folder "${name}"?\n\nThe folder must be empty (no photos).`)) return;
+  try {
+    await api('/api/folders/' + encodeURIComponent(name), 'DELETE');
+    showToast(`Folder "${name}" deleted`);
+    if (currentFolder === name) currentFolder = '';
+    await renderFolders();
+    loadPhotos();
+  } catch (e) {}
+}
+
+async function movePhoto(key) {
+  const targets = allFolders.map(f => f.name).filter(n => n);
+  if (!targets.length) { alert('No folders to move to. Create one first.'); return; }
+  const choice = prompt(`Move to which folder?\n\nAvailable: ${targets.join(', ')}\n\nType the exact folder name:`);
+  if (!choice) return;
+  const target = choice.trim();
+  if (!targets.includes(target)) { alert(`"${target}" is not a folder. Available: ${targets.join(', ')}`); return; }
+  try {
+    await api('/api/images/' + encodeURIComponent(key) + '/move', 'POST', { folder: target });
+    showToast(`Moved to "${target}"`);
+    renderFolders();
+    loadPhotos();
+  } catch (e) {}
+}
+
 async function loadPhotos() {
   const g = document.getElementById('photo-grid');
   if (!g) return;
   try {
-    const p = await api('/api/images');
-    if (!p.length) { g.innerHTML = '<div class="empty">No photos yet.</div>'; return; }
+    const qs = currentFolder ? '?folder=' + encodeURIComponent(currentFolder) : '';
+    const p = await api('/api/images' + qs);
+    if (!p.length) { g.innerHTML = '<div class="empty">No photos in this folder.</div>'; return; }
     const isAdmin = CU && CU.role === 'admin';
     g.innerHTML = p.map(x => {
       const safeKey = x.key.replace(/'/g, "\\'");
       const safeName = (x.name || '').replace(/'/g, "\\'");
       const ctx = isAdmin ? `oncontextmenu="event.preventDefault();delPhoto('${safeKey}','${safeName}')"` : '';
-      const delBtn = isAdmin ? `<button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Delete</button>` : '';
+      const delBtn = isAdmin ? `<button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Del</button>` : '';
+      const moveBtn = `<button class="btn-o" style="font-size:10px;padding:2px 8px" onclick="movePhoto('${safeKey}')">Move</button>`;
+      const folderTag = x.folder ? `<div style="font-size:9px;color:var(--gold2);text-transform:uppercase;letter-spacing:1px">${x.folder}</div>` : '<div style="font-size:9px;color:var(--t2);font-style:italic">unfiled</div>';
       const imgTitle = isAdmin ? 'Right-click to delete' : '';
-      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" ${ctx}><img src="${x.url}" style="width:100%;height:120px;object-fit:cover" title="${imgTitle}"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy URL</button>${delBtn}</div></div></div>`;
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" ${ctx}><img src="${x.url}" style="width:100%;height:120px;object-fit:cover" title="${imgTitle}"><div style="padding:6px 8px">${folderTag}<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy</button>${moveBtn}${delBtn}</div></div></div>`;
     }).join('');
   } catch (e) { g.innerHTML = '<div class="empty">Could not load.</div>'; }
 }
@@ -1438,16 +1561,18 @@ async function delPhoto(key, name) {
 async function uploadPhotos(input) {
   const files = Array.from(input.files);
   const s = document.getElementById('upload-status');
+  const targetFolder = currentFolder || 'Inbox';
   for (let i = 0; i < files.length; i++) {
-    s.textContent = `Uploading ${i+1} of ${files.length}...`;
+    s.textContent = `Uploading ${i+1} of ${files.length} to ${targetFolder}…`;
     const fd = new FormData();
     fd.append('file', files[i]);
+    fd.append('folder', targetFolder);
     try {
       const r = await fetch(API + '/api/images/upload', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
       if (!r.ok) throw new Error('Failed');
     } catch (e) { showToast('Upload failed: ' + e.message); }
   }
-  s.textContent = ''; input.value = ''; showToast('Photos uploaded!'); loadPhotos();
+  s.textContent = ''; input.value = ''; showToast(`Uploaded to ${targetFolder}!`); renderFolders(); loadPhotos();
 }
  initApp();
 </script>

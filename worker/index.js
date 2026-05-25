@@ -158,32 +158,144 @@ export default {
 
     // ── IMAGES (R2) ──────────────────────────────────────────────────────────
     if (path === '/api/images' && method === 'GET') {
-      const list = await env.IMAGES.list({ prefix: 'photos/' });
-      const images = list.objects.map(obj => ({
-        key: obj.key,
-        url: `${R2_PUBLIC}/${obj.key}`,
-        size: obj.size,
-        uploaded: obj.uploaded,
-        name: obj.customMetadata?.originalName || obj.key.split('/').pop(),
-        uploadedBy: obj.customMetadata?.uploadedBy || '',
-      }));
+      const folder = url.searchParams.get('folder') || '';
+      const prefix = folder ? `photos/${folder}/` : 'photos/';
+      const list = await env.IMAGES.list({ prefix });
+      const images = list.objects
+        .filter(obj => !obj.key.endsWith('/.folder'))
+        .map(obj => {
+          const parts = obj.key.split('/');
+          const fname = parts[parts.length - 1];
+          const fld = parts.length >= 3 ? parts.slice(1, -1).join('/') : '';
+          return {
+            key: obj.key,
+            url: `${R2_PUBLIC}/${obj.key}`,
+            size: obj.size,
+            uploaded: obj.uploaded,
+            name: obj.customMetadata?.originalName || fname,
+            uploadedBy: obj.customMetadata?.uploadedBy || '',
+            folder: fld,
+          };
+        });
       return json(images.reverse());
     }
 
     if (path === '/api/images/upload' && method === 'POST') {
       const formData = await request.formData();
       const file = formData.get('file');
+      const folder = (formData.get('folder') || 'Inbox').toString().trim() || 'Inbox';
       if (!file) return err('No file provided');
       const ext = file.name.split('.').pop().toLowerCase();
       const allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
       if (!allowed.includes(ext)) return err('Invalid file type. Use JPG, PNG, GIF or WebP');
       if (file.size > 10 * 1024 * 1024) return err('File too large. Max 10MB');
-      const key = `photos/${Date.now()}-${randId(6)}.${ext}`;
+      const safeFolder = folder.replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60) || 'Inbox';
+      const key = `photos/${safeFolder}/${Date.now()}-${randId(6)}.${ext}`;
       await env.IMAGES.put(key, file.stream(), {
         httpMetadata: { contentType: file.type },
-        customMetadata: { uploadedBy: user.username, originalName: file.name },
+        customMetadata: { uploadedBy: user.username, originalName: file.name, folder: safeFolder },
       });
-      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name });
+      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name, folder: safeFolder });
+    }
+
+    if (path.startsWith('/api/images/') && path.endsWith('/move') && method === 'POST') {
+      const key = decodeURIComponent(path.slice('/api/images/'.length, -('/move'.length)));
+      const { folder } = body;
+      if (!folder) return err('Target folder required');
+      const safeFolder = String(folder).replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60);
+      if (!safeFolder) return err('Invalid folder name');
+      const obj = await env.IMAGES.get(key);
+      if (!obj) return err('Photo not found', 404);
+      const fname = key.split('/').pop();
+      const newKey = `photos/${safeFolder}/${fname}`;
+      if (newKey === key) return json({ success: true, key, url: `${R2_PUBLIC}/${key}` });
+      const oldUrl = `${R2_PUBLIC}/${key}`;
+      const newUrl = `${R2_PUBLIC}/${newKey}`;
+      const md = obj.customMetadata || {};
+      md.folder = safeFolder;
+      await env.IMAGES.put(newKey, obj.body, {
+        httpMetadata: obj.httpMetadata,
+        customMetadata: md,
+      });
+      await env.IMAGES.delete(key);
+      // Update any DB rows that reference the old URL so they don't 404
+      await Promise.all([
+        db.prepare('UPDATE posts SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+        db.prepare('UPDATE library SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+        db.prepare('UPDATE approvals SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+      ]);
+      return json({ success: true, key: newKey, url: newUrl, folder: safeFolder });
+    }
+
+    // ── PHOTO FOLDERS ────────────────────────────────────────────────────────
+    if (path === '/api/folders' && method === 'GET') {
+      const { results: folders } = await db.prepare('SELECT name, created_by, created_at FROM photo_folders ORDER BY name').all();
+      const list = await env.IMAGES.list({ prefix: 'photos/' });
+      const counts = {};
+      for (const obj of list.objects) {
+        if (obj.key.endsWith('/.folder')) continue;
+        const parts = obj.key.split('/');
+        if (parts.length >= 3) {
+          const f = parts.slice(1, -1).join('/');
+          counts[f] = (counts[f] || 0) + 1;
+        }
+      }
+      return json(folders.map(f => ({ ...f, count: counts[f.name] || 0 })));
+    }
+
+    if (path === '/api/folders' && method === 'POST') {
+      if (user.role !== 'admin') return err('Admin only', 403);
+      const raw = (body.name || '').toString().trim();
+      const name = raw.replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60);
+      if (!name) return err('Folder name required (letters, numbers, spaces, _ or - only)');
+      const existing = await db.prepare('SELECT name FROM photo_folders WHERE name = ?').bind(name).first();
+      if (existing) return err('Folder already exists');
+      await db.prepare('INSERT INTO photo_folders (name, created_by, created_at) VALUES (?, ?, ?)').bind(name, user.username, new Date().toISOString()).run();
+      return json({ success: true, name });
+    }
+
+    if (path.startsWith('/api/folders/') && method === 'DELETE') {
+      if (user.role !== 'admin') return err('Admin only', 403);
+      const name = decodeURIComponent(path.slice('/api/folders/'.length));
+      if (name === 'Inbox') return err('Cannot delete the default Inbox folder');
+      const list = await env.IMAGES.list({ prefix: `photos/${name}/` });
+      const real = list.objects.filter(o => !o.key.endsWith('/.folder'));
+      if (real.length) return err(`Folder is not empty (${real.length} photo${real.length>1?'s':''}). Move or delete the photos first.`, 409);
+      await db.prepare('DELETE FROM photo_folders WHERE name = ?').bind(name).run();
+      return json({ success: true });
+    }
+
+    if (path.startsWith('/api/folders/') && method === 'PUT') {
+      if (user.role !== 'admin') return err('Admin only', 403);
+      const oldName = decodeURIComponent(path.slice('/api/folders/'.length));
+      const raw = (body.name || '').toString().trim();
+      const newName = raw.replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60);
+      if (!newName) return err('New name required');
+      if (newName === oldName) return json({ success: true, name: newName });
+      const exists = await db.prepare('SELECT name FROM photo_folders WHERE name = ?').bind(newName).first();
+      if (exists) return err('A folder with that name already exists');
+      // Move all R2 objects under photos/<oldName>/ to photos/<newName>/
+      const list = await env.IMAGES.list({ prefix: `photos/${oldName}/` });
+      for (const obj of list.objects) {
+        if (obj.key.endsWith('/.folder')) continue;
+        const fname = obj.key.split('/').pop();
+        const newKey = `photos/${newName}/${fname}`;
+        const src = await env.IMAGES.get(obj.key);
+        if (!src) continue;
+        const md = src.customMetadata || {};
+        md.folder = newName;
+        await env.IMAGES.put(newKey, src.body, { httpMetadata: src.httpMetadata, customMetadata: md });
+        await env.IMAGES.delete(obj.key);
+        const oldUrl = `${R2_PUBLIC}/${obj.key}`;
+        const newUrl = `${R2_PUBLIC}/${newKey}`;
+        await Promise.all([
+          db.prepare('UPDATE posts SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+          db.prepare('UPDATE library SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+          db.prepare('UPDATE approvals SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
+        ]);
+      }
+      await db.prepare('UPDATE photo_folders SET name = ? WHERE name = ?').bind(newName, oldName).run();
+      return json({ success: true, name: newName });
     }
 
     if (path.startsWith('/api/images/') && method === 'DELETE') {
