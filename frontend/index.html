@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>J Michael's Ã¢â‚¬â€ Marketing HQ</title>
+<title>J Michael's — Marketing HQ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
@@ -199,7 +199,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
   </div>
 
   <div class="tabbar">
-    <div class="tab active" data-t="generate" onclick="switchTab('generate')">Ã¢Å“Â¦ Generate</div>
+    <div class="tab active" data-t="generate" onclick="switchTab('generate')">✦ Generate</div>
     <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Photos</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
     <div class="tab" data-t="analytics" onclick="switchTab('analytics')">Analytics</div>
     <div class="tab" data-t="scores" onclick="switchTab('scores')">Scores</div>
@@ -221,7 +221,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="sec">Quick prompts</div>
           <div class="qgrid" id="qgrid"></div>
           <div class="sec" style="margin-top:.75rem">Custom prompt</div>
-          <div class="f"><textarea id="cprompt" rows="4" placeholder="Describe what you needÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><textarea id="cprompt" rows="4" placeholder="Describe what you need…"></textarea></div>
           <div class="f"><label>Platform</label>
             <select id="gplat"><option>Facebook</option><option>Instagram</option><option>Email newsletter</option><option>Google Business</option><option>SMS / Text</option><option>Yelp response</option><option>TripAdvisor response</option><option>All platforms</option></select>
           </div>
@@ -232,7 +232,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
         </div>
         <div class="card" style="display:flex;flex-direction:column;gap:10px">
           <div class="sec">Output</div>
-          <div class="outbox" id="outbox"><span style="color:var(--t2);font-style:italic">Generated content appears hereÃ¢â‚¬Â¦</span></div>
+          <div class="outbox" id="outbox"><span style="color:var(--t2);font-style:italic">Generated content appears here…</span></div>
           <div class="row">
             <button class="btn-o" onclick="copyOut()"><i class="ti ti-copy" style="font-size:12px;margin-right:4px"></i>Copy</button>
             <button class="btn-o" onclick="saveToLib()">Save to Library</button>
@@ -250,15 +250,15 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
     <div class="panel" id="panel-calendar">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
         <div class="row">
-          <button class="bsm" onclick="chM(-1)">Ã¢â‚¬Â¹</button>
+          <button class="bsm" onclick="chM(-1)">‹</button>
           <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:var(--gold2)" id="cal-lbl"></div>
-          <button class="bsm" onclick="chM(1)">Ã¢â‚¬Âº</button>
+          <button class="bsm" onclick="chM(1)">›</button>
         </div>
         <button class="btn-o" onclick="openAddPost(null)">+ Add Post</button>
       </div>
       <div class="calgrid" id="calgrid"></div>
       <div class="mwrap" id="cal-modal">
-        <div class="mhead"><div class="mtitle" id="cmt">Add Post</div><button class="bsm" onclick="closeCalModal()">Ã¢Å“â€¢</button></div>
+        <div class="mhead"><div class="mtitle" id="cmt">Add Post</div><button class="bsm" onclick="closeCalModal()">✕</button></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
           <div class="f" style="margin:0"><label>Date</label><input type="date" id="pdate"></div>
           <div class="f" style="margin:0"><label>Platform</label>
@@ -282,7 +282,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
       <div class="ga" id="ana-metrics"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.75rem;margin-bottom:1rem" id="plat-grid"></div>
       <div class="card">
-        <div class="sec" style="margin-bottom:.75rem">Engagement rate Ã¢â‚¬â€ last 8 weeks</div>
+        <div class="sec" style="margin-bottom:.75rem">Engagement rate — last 8 weeks</div>
         <div style="display:flex;gap:16px;margin-bottom:8px;font-size:11px;color:var(--t2)">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4267B2;margin-right:4px"></span>Facebook</span>
           <span><span style="display:inline-block;width:10px;height:3px;background:#C13584;margin-right:4px;vertical-align:middle"></span>Instagram</span>
@@ -300,7 +300,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="f"><label>Platform</label>
             <select id="score-plat"><option value="fb">Facebook</option><option value="ig">Instagram</option><option value="em">Email</option><option value="gg">Google Business</option><option value="yelp">Yelp</option><option value="sms">SMS</option></select>
           </div>
-          <div class="f"><label>Post content</label><textarea id="score-content" rows="5" placeholder="Paste your post content hereÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label>Post content</label><textarea id="score-content" rows="5" placeholder="Paste your post content here…"></textarea></div>
           <div class="f"><label>Actual results (optional)</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
               <input id="sc-likes" type="number" placeholder="Likes" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:7px 9px;color:var(--text);font-family:'Outfit',sans-serif;font-size:12px;outline:none;width:100%">
@@ -339,7 +339,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           </div>
           <div class="f"><label>Due date & time</label><input type="datetime-local" id="rem-due"></div>
           <div class="f"><label>Priority</label>
-            <select id="rem-priority"><option value="high">High Ã¢â‚¬â€ urgent</option><option value="medium">Medium</option><option value="low">Low</option></select>
+            <select id="rem-priority"><option value="high">High — urgent</option><option value="medium">Medium</option><option value="low">Low</option></select>
           </div>
           <div class="f"><label style="display:flex;justify-content:space-between;align-items:center">Notes<span id="rem-ai-btn" onclick="aiFillReminderNotes()" style="font-size:10px;color:var(--gold2);cursor:pointer;font-weight:500">✦ AI suggest</span></label><textarea id="rem-notes" rows="2" placeholder="Optional details…"></textarea></div>
           <button class="btn-add" onclick="addReminder()" style="width:100%">Add Reminder</button>
@@ -356,7 +356,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
             <select id="rem-filter" onchange="renderReminders()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:5px 9px;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px">
               <option value="active">Active</option><option value="done">Completed</option><option value="all">All</option>
             </select>
-            <button class="btn-o" onclick="genSmartReminders()">Ã¢Å“Â¦ AI Smart Reminders</button>
+            <button class="btn-o" onclick="genSmartReminders()">✦ AI Smart Reminders</button>
           </div>
         </div>
         <div id="rem-list"></div>
@@ -373,12 +373,12 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
         </div>
         <div class="card">
           <div class="sec" style="margin-bottom:.75rem">AI review response generator</div>
-          <div class="f"><label>Paste review text</label><textarea id="rev-input" rows="4" placeholder="Paste the review you want to respond toÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label>Paste review text</label><textarea id="rev-input" rows="4" placeholder="Paste the review you want to respond to…"></textarea></div>
           <div class="f"><label>Tone</label>
             <select id="rev-tone"><option>Grateful & warm</option><option>Professional & apologetic</option><option>Friendly & direct</option></select>
           </div>
           <button class="btn-g" id="btn-rev" onclick="genRevReply()">Generate Reply</button>
-          <div class="outbox" id="rev-out" style="margin-top:10px;min-height:80px"><span style="color:var(--t2);font-style:italic">Reply appears hereÃ¢â‚¬Â¦</span></div>
+          <div class="outbox" id="rev-out" style="margin-top:10px;min-height:80px"><span style="color:var(--t2);font-style:italic">Reply appears here…</span></div>
           <button class="btn-o" onclick="cpRevOut()" style="margin-top:8px;width:100%">Copy Reply</button>
         </div>
       </div>
@@ -391,7 +391,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
         <button class="btn-o" onclick="showCampModal()">+ New Campaign</button>
       </div>
       <div class="mwrap" id="camp-modal">
-        <div class="mhead"><div class="mtitle">New Campaign</div><button class="bsm" onclick="hideCampModal()">Ã¢Å“â€¢</button></div>
+        <div class="mhead"><div class="mtitle">New Campaign</div><button class="bsm" onclick="hideCampModal()">✕</button></div>
         <div class="g2" style="gap:10px;margin-bottom:10px">
           <div class="f" style="margin:0"><label>Name</label><input id="camp-name" placeholder="e.g. Summer Promo"></div>
           <div class="f" style="margin:0"><label>Goal</label><select id="camp-goal"><option>Brand awareness</option><option>Drive reservations</option><option>Promote event</option><option>Loyalty / retention</option><option>New menu launch</option></select></div>
@@ -471,7 +471,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
         <table class="tbl"><thead><tr><th>Username</th><th>Role</th><th>Added</th><th></th></tr></thead><tbody id="utbody"></tbody></table>
       </div>
       <div class="mwrap" id="pw-modal">
-        <div class="mhead"><div class="mtitle">Change Password</div><button class="bsm" onclick="hidePwModal()">Ã¢Å“â€¢</button></div>
+        <div class="mhead"><div class="mtitle">Change Password</div><button class="bsm" onclick="hidePwModal()">✕</button></div>
         <div class="f"><label>Current password</label><input id="pw-cur" type="password"></div>
         <div class="f"><label>New password</label><input id="pw-new" type="password"></div>
         <div class="f"><label>Confirm new password</label><input id="pw-conf" type="password"></div>
@@ -519,7 +519,7 @@ function showToast(m) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
-function fdate(iso) { return iso ? iso.split('T')[0] : 'Ã¢â‚¬â€'; }
+function fdate(iso) { return iso ? iso.split('T')[0] : '—'; }
 function scoreGrade(n) {
   if (n >= 85) return { cls: 'score-a', label: 'Excellent' };
   if (n >= 70) return { cls: 'score-b', label: 'Good' };
@@ -619,13 +619,13 @@ function switchTab(t) {
 
 const QP = [
   {l:'Daily Special',p:"Write a social media post for our daily special at J Michael's Tavern & Grille in Stuart, FL. Make it mouthwatering and inviting."},
-  {l:'Happy Hour',p:"Craft a happy hour promo for J Michael's Ã¢â‚¬â€ weekdays 4Ã¢â‚¬â€œ7pm with drink specials. Drive foot traffic."},
+  {l:'Happy Hour',p:"Craft a happy hour promo for J Michael's — weekdays 4–7pm with drink specials. Drive foot traffic."},
   {l:'Weekend Event',p:"Write an exciting weekend event announcement for J Michael's Tavern & Grille."},
   {l:'New Menu Item',p:"Create an appetizing post introducing a new menu item at J Michael's."},
   {l:'5-Star Reply',p:"Write a warm, grateful response to a 5-star Google/Yelp review for J Michael's."},
   {l:'1-Star Reply',p:"Write a professional, empathetic response to a negative 1-star review for J Michael's."},
   {l:'Holiday Post',p:"Create a holiday-themed marketing post for J Michael's Tavern & Grille."},
-  {l:'Email Newsletter',p:"Write a short monthly email newsletter for J Michael's regulars Ã¢â‚¬â€ events, specials, a personal touch."},
+  {l:'Email Newsletter',p:"Write a short monthly email newsletter for J Michael's regulars — events, specials, a personal touch."},
   {l:'Loyalty Post',p:"Write a post thanking loyal regulars at J Michael's and encouraging repeat visits."},
   {l:'Private Events',p:"Create a post promoting private dining and event hosting at J Michael's Tavern & Grille."},
 ];
@@ -691,12 +691,12 @@ async function genContent() {
   const btn = document.getElementById('btngen');
   const out = document.getElementById('outbox');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>GeneratingÃ¢â‚¬Â¦';
-  out.innerHTML = '<span style="color:var(--t2);font-style:italic">WritingÃ¢â‚¬Â¦</span>';
+  btn.innerHTML = '<span class="spinner"></span>Generating…';
+  out.innerHTML = '<span style="color:var(--t2);font-style:italic">Writing…</span>';
   document.getElementById('gen-conf').textContent = '';
   try {
     genOut = await callClaude(
-      `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL Ã¢â‚¬â€ an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified platform and tone. Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
+      `You are the marketing voice for J Michael's Tavern & Grille in Stuart, FL — an upscale-casual restaurant and bar beloved by locals. Write compelling, authentic content. Tailor for the specified platform and tone. Include relevant emojis. Be specific, vivid, genuine. Never sound like generic AI.`,
       `Platform: ${plat}\nTone: ${tone}\n\n${prompt}`
     );
     out.textContent = genOut;
@@ -768,7 +768,7 @@ function mkCell(grid, day, cls, yr, mo, byDate) {
   (byDate[ds] || []).slice(0, 2).forEach(p => {
     const ch = document.createElement('div');
     ch.className = `chip chip-${p.platform}`;
-    ch.textContent = p.content.substring(0, 22) + 'Ã¢â‚¬Â¦';
+    ch.textContent = p.content.substring(0, 22) + '…';
     ch.onclick = e => { e.stopPropagation(); openEditPost(p); };
     c.appendChild(ch);
   });
@@ -876,9 +876,9 @@ async function scorePost() {
   const plat = document.getElementById('score-plat').value;
   if (!content) { showToast('Paste post content first'); return; }
   const btn = document.getElementById('btn-score');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>ScoringÃ¢â‚¬Â¦';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Scoring…';
   const resultEl = document.getElementById('score-result');
-  resultEl.innerHTML = '<div style="color:var(--t2);font-style:italic;padding:1rem">AnalyzingÃ¢â‚¬Â¦</div>';
+  resultEl.innerHTML = '<div style="color:var(--t2);font-style:italic;padding:1rem">Analyzing…</div>';
   try {
     const likes = parseInt(document.getElementById('sc-likes').value) || 0;
     const comments = parseInt(document.getElementById('sc-comments').value) || 0;
@@ -909,11 +909,11 @@ async function scorePost() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:.75rem">
         <div>
           <div class="sec" style="margin-bottom:4px;color:var(--green)">Strengths</div>
-          ${data.strengths.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">Ã¢â‚¬Â¢ ${s}</div>`).join('')}
+          ${data.strengths.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">• ${s}</div>`).join('')}
         </div>
         <div>
           <div class="sec" style="margin-bottom:4px;color:var(--red)">Improve</div>
-          ${data.improvements.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">Ã¢â‚¬Â¢ ${s}</div>`).join('')}
+          ${data.improvements.map(s => `<div style="font-size:11px;color:var(--text);margin-bottom:4px">• ${s}</div>`).join('')}
         </div>
       </div>
       <div style="background:var(--s2);border-radius:var(--rsm);padding:10px;margin-bottom:8px">
@@ -945,7 +945,7 @@ async function renderScoreHistory() {
       <div class="score-ring ${g.cls}" style="width:38px;height:38px;font-size:.85rem;border-width:2px;flex-shrink:0">${s.overall}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.content_preview}</div>
-        <div style="font-size:10px;color:var(--t2);margin-top:2px">${pnames[s.platform]||s.platform} Ã‚Â· ${fdate(s.created_at)} Ã‚Â· by ${s.scored_by}</div>
+        <div style="font-size:10px;color:var(--t2);margin-top:2px">${pnames[s.platform]||s.platform} · ${fdate(s.created_at)} · by ${s.scored_by}</div>
       </div>
       <span class="tag ${g.label==='Excellent'?'tag-pub':g.label==='Good'?'tag-sched':g.label==='Fair'?'tag-draft':'tag-pend'}">${g.label}</span>
     </div>`;
@@ -1022,11 +1022,11 @@ async function renderReminders() {
       <div style="flex:1">
         <div style="font-size:13px;font-weight:500;margin-bottom:3px;${r.done?'text-decoration:line-through;color:var(--t2)':''}">${r.title}</div>
         ${r.notes ? `<div style="font-size:11px;color:var(--t2);line-height:1.5;margin-bottom:4px">${r.notes}</div>` : ''}
-        <div style="font-size:10px;color:var(--t2)">${rt.label} Ã‚Â· Due: ${dueStr} Ã‚Â· ${r.priority} priority</div>
+        <div style="font-size:10px;color:var(--t2)">${rt.label} · Due: ${dueStr} · ${r.priority} priority</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
         ${!r.done ? `<button class="btn-o" style="font-size:11px;padding:4px 10px" onclick="doneRem('${r.id}')">Done</button>` : '<span style="font-size:10px;color:var(--green)">Done</span>'}
-        <button class="btn-d" style="font-size:10px;padding:3px 8px" onclick="delRem('${r.id}')">Ã¢Å“â€¢</button>
+        <button class="btn-d" style="font-size:10px;padding:3px 8px" onclick="delRem('${r.id}')">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -1039,7 +1039,7 @@ async function genSmartReminders() {
   const upcoming = posts.filter(p => p.status === 'scheduled' && new Date(p.date) >= now).slice(0, 5);
   for (const p of upcoming) {
     const due = new Date(p.date); due.setHours(9, 0, 0, 0);
-    await api('/api/reminders', 'POST', { title: `Post due: ${p.content.substring(0, 40)}Ã¢â‚¬Â¦`, type: 'post', due_at: due.toISOString(), priority: 'high', notes: `Platform: ${pnames[p.platform] || p.platform}` });
+    await api('/api/reminders', 'POST', { title: `Post due: ${p.content.substring(0, 40)}…`, type: 'post', due_at: due.toISOString(), priority: 'high', notes: `Platform: ${pnames[p.platform] || p.platform}` });
   }
   await api('/api/reminders', 'POST', { title: "Check this week's post performance", type: 'analytics', due_at: new Date(Date.now() + 86400000 * 2).toISOString(), priority: 'medium', notes: 'Review engagement across all platforms' });
   renderReminders(); checkRemBadge(); showToast(`Smart reminders added!`);
@@ -1047,7 +1047,7 @@ async function genSmartReminders() {
 
 function renderReputation() {
   const platforms = [{name:'Google',rating:4.6,reviews:284,color:'#34A853'},{name:'Yelp',rating:4.2,reviews:156,color:'#D32323'},{name:'TripAdvisor',rating:4.5,reviews:92,color:'#00AA6C'},{name:'Facebook',rating:4.7,reviews:63,color:'#4267B2'}];
-  document.getElementById('rep-scores').innerHTML = platforms.map(p => `<div class="metric"><div class="mv" style="color:${p.color}">${p.rating}</div><div style="color:${p.color};font-size:14px;letter-spacing:2px">${'Ã¢Ëœâ€¦'.repeat(Math.round(p.rating))}${'Ã¢Ëœâ€ '.repeat(5-Math.round(p.rating))}</div><div class="ml">${p.name} Ã‚Â· ${p.reviews} reviews</div></div>`).join('');
+  document.getElementById('rep-scores').innerHTML = platforms.map(p => `<div class="metric"><div class="mv" style="color:${p.color}">${p.rating}</div><div style="color:${p.color};font-size:14px;letter-spacing:2px">${'★'.repeat(Math.round(p.rating))}${'☆'.repeat(5-Math.round(p.rating))}</div><div class="ml">${p.name} · ${p.reviews} reviews</div></div>`).join('');
   const reviews = [
     {author:'Sarah M.',platform:'Google',rating:5,date:'2 days ago',text:"Amazing! The grouper sandwich was the best I've had in Stuart. Staff was incredibly warm.",replied:true,reply:"Thank you Sarah! The grouper is a team favorite too. See you soon!"},
     {author:'Tom R.',platform:'Yelp',rating:2,date:'5 days ago',text:'Service was slow on a Tuesday night and my steak came out wrong twice.',replied:false},
@@ -1059,7 +1059,7 @@ function renderReputation() {
         <div><span style="font-size:12px;font-weight:500;color:var(--text)">${r.author}</span><span style="font-size:10px;background:var(--s2);padding:1px 6px;border-radius:3px;color:var(--t2);margin-left:6px">${r.platform}</span></div>
         <div style="font-size:11px;color:var(--t2)">${r.date}</div>
       </div>
-      <div style="color:${r.rating>=4?'var(--gold2)':'var(--red)'};font-size:12px;margin-bottom:4px">${'Ã¢Ëœâ€¦'.repeat(r.rating)}${'Ã¢Ëœâ€ '.repeat(5-r.rating)}</div>
+      <div style="color:${r.rating>=4?'var(--gold2)':'var(--red)'};font-size:12px;margin-bottom:4px">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
       <div style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px">${r.text}</div>
       ${r.replied ? `<div style="background:var(--s2);border-radius:var(--rsm);padding:8px;font-size:11px;color:var(--t2);border-left:2px solid var(--gold)"><span style="font-size:10px;color:var(--gold2);font-weight:500">J Michael's replied:</span> ${r.reply}</div>` : `<button class="btn-o" style="font-size:10px;padding:4px 10px" onclick="document.getElementById('rev-input').value='${r.text.replace(/'/g,"\\'")}'" >Generate Reply</button>`}
     </div>`).join('');
@@ -1069,8 +1069,8 @@ async function genRevReply() {
   const tone = document.getElementById('rev-tone').value;
   if (!rev) { showToast('Paste a review first'); return; }
   const btn = document.getElementById('btn-rev'); const out = document.getElementById('rev-out');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>WritingÃ¢â‚¬Â¦';
-  out.innerHTML = '<span style="color:var(--t2);font-style:italic">GeneratingÃ¢â‚¬Â¦</span>';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Writing…';
+  out.innerHTML = '<span style="color:var(--t2);font-style:italic">Generating…</span>';
   try {
     revOut = await callClaude(`You are responding to reviews for J Michael's Tavern & Grille in Stuart, FL. Write genuine 2-4 sentence responses. Never sound corporate. Sign off as "The J Michael's Team".`, `Tone: ${tone}\n\nReview: ${rev}`, 300);
     out.textContent = revOut;
@@ -1089,7 +1089,7 @@ async function renderCampaigns() {
     const active = now >= start && now <= end;
     return `<div class="card" style="margin-bottom:.75rem">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div><div style="font-size:13px;font-weight:500;margin-bottom:3px;color:var(--text)">${c.name}</div><div style="font-size:11px;color:var(--t2)">${c.goal} Ã‚Â· ${c.start_date} Ã¢â€ â€™ ${c.end_date}</div></div>
+        <div><div style="font-size:13px;font-weight:500;margin-bottom:3px;color:var(--text)">${c.name}</div><div style="font-size:11px;color:var(--t2)">${c.goal} · ${c.start_date} → ${c.end_date}</div></div>
         <span class="tag ${active?'tag-pub':'tag-draft'}">${active?'Active':'Inactive'}</span>
       </div>
       ${c.description ? `<div style="font-size:11px;color:var(--text);margin-bottom:6px">${c.description}</div>` : ''}
@@ -1115,10 +1115,10 @@ async function renderLibrary() {
   document.getElementById('lib-list').innerHTML = filtered.map(item => `
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:.9rem;margin-bottom:.6rem;cursor:pointer" onclick="useLibItem('${item.id}')" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-        <span style="font-size:10px;color:var(--t2)">${pnames[item.platform]||item.platform} Ã‚Â· ${fdate(item.saved_at)} Ã‚Â· by ${item.saved_by}</span>
+        <span style="font-size:10px;color:var(--t2)">${pnames[item.platform]||item.platform} · ${fdate(item.saved_at)} · by ${item.saved_by}</span>
         <button class="btn-d" style="padding:2px 8px;font-size:10px" onclick="event.stopPropagation();delLib('${item.id}')">Remove</button>
       </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.5">${item.content.substring(0,120)}${item.content.length>120?'Ã¢â‚¬Â¦':''}</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5">${item.content.substring(0,120)}${item.content.length>120?'…':''}</div>
     </div>`).join('');
 }
 async function useLibItem(id) {
@@ -1137,10 +1137,10 @@ async function renderApprovals() {
   document.getElementById('appr-list').innerHTML = pending.map(a => `
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.75rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
-        <div><span style="font-size:12px;font-weight:500;color:var(--text)">${a.platform}</span><span style="font-size:10px;color:var(--t2);margin-left:8px">by ${a.submitted_by} Ã‚Â· ${fdate(a.submitted_at)}</span></div>
+        <div><span style="font-size:12px;font-weight:500;color:var(--text)">${a.platform}</span><span style="font-size:10px;color:var(--t2);margin-left:8px">by ${a.submitted_by} · ${fdate(a.submitted_at)}</span></div>
         <span class="tag tag-pend">Pending</span>
       </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">${a.content.substring(0,200)}${a.content.length>200?'Ã¢â‚¬Â¦':''}</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">${a.content.substring(0,200)}${a.content.length>200?'…':''}</div>
       ${CU.role==='admin'?`<div style="display:flex;gap:8px"><button class="btn-approve" onclick="approvePost('${a.id}','${a.platform}','${a.content.replace(/'/g,"\\'")}')">Approve & Schedule</button><button class="btn-reject" onclick="rejectPost('${a.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--t2)">Awaiting admin review</div>'}
     </div>`).join('');
 }
@@ -1204,7 +1204,7 @@ async function genInvite() {
   const data = await api('/api/invites', 'POST', { role, days });
   document.getElementById('inv-display').style.display = 'block';
   document.getElementById('inv-code-box').textContent = data.code;
-  document.getElementById('inv-exp-lbl').textContent = `Role: ${role} Ã‚Â· Expires: ${new Date(data.expires_at).toLocaleDateString()} Ã‚Â· Share this code Ã¢â‚¬â€ users paste it on the Register screen`;
+  document.getElementById('inv-exp-lbl').textContent = `Role: ${role} · Expires: ${new Date(data.expires_at).toLocaleDateString()} · Share this code — users paste it on the Register screen`;
   renderInvites(); showToast('Invite code generated!');
 }
 function cpInvite() { const c = document.getElementById('inv-code-box').textContent; navigator.clipboard.writeText(c).then(() => showToast('Code copied!')); }
