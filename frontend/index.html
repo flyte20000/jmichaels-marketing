@@ -341,7 +341,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="f"><label>Priority</label>
             <select id="rem-priority"><option value="high">High Ã¢â‚¬â€ urgent</option><option value="medium">Medium</option><option value="low">Low</option></select>
           </div>
-          <div class="f"><label>Notes</label><textarea id="rem-notes" rows="2" placeholder="Optional detailsÃ¢â‚¬Â¦"></textarea></div>
+          <div class="f"><label style="display:flex;justify-content:space-between;align-items:center">Notes<span id="rem-ai-btn" onclick="aiFillReminderNotes()" style="font-size:10px;color:var(--gold2);cursor:pointer;font-weight:500">✦ AI suggest</span></label><textarea id="rem-notes" rows="2" placeholder="Optional details…"></textarea></div>
           <button class="btn-add" onclick="addReminder()" style="width:100%">Add Reminder</button>
         </div>
         <div class="card">
@@ -400,7 +400,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="f" style="margin:0"><label>Start date</label><input type="date" id="camp-start"></div>
           <div class="f" style="margin:0"><label>End date</label><input type="date" id="camp-end"></div>
         </div>
-        <div class="f"><label>Description</label><textarea id="camp-desc" rows="2" placeholder="Campaign overviewÃ¢â‚¬Â¦"></textarea></div>
+        <div class="f"><label style="display:flex;justify-content:space-between;align-items:center">Description<span id="camp-ai-btn" onclick="aiFillCampaignDesc()" style="font-size:10px;color:var(--gold2);cursor:pointer;font-weight:500">✦ AI suggest</span></label><textarea id="camp-desc" rows="2" placeholder="Campaign overview…"></textarea></div>
         <div style="text-align:right"><button class="btn-add" onclick="saveCampaign()">Create Campaign</button></div>
       </div>
       <div id="camp-list"></div>
@@ -635,18 +635,52 @@ function initQBtns() {
 function useQP(i) { document.getElementById('cprompt').value = QP[i].p; }
 
 async function callClaude(system, userMsg, maxTokens = 1000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: userMsg }],
-    }),
+  const d = await api('/api/ai/generate', 'POST', {
+    system,
+    prompt: userMsg,
+    max_tokens: maxTokens,
   });
-  const d = await res.json();
-  return d.content?.map(c => c.text || '').join('') || '';
+  return d.text || '';
+}
+
+async function aiFillReminderNotes() {
+  const title = document.getElementById('rem-title').value.trim();
+  const type = document.getElementById('rem-type').value;
+  if (!title) { showToast('Enter a title first'); return; }
+  const btn = document.getElementById('rem-ai-btn');
+  const out = document.getElementById('rem-notes');
+  const orig = btn.textContent;
+  btn.textContent = '✦ Writing…';
+  try {
+    const text = await callClaude(
+      "You write concise, action-oriented reminder notes for a tavern marketing manager. Keep it under 50 words. Plain text, no markdown.",
+      `Reminder title: "${title}"\nType: ${type}\n\nWrite a short helpful note with 1-2 specific suggestions.`,
+      200
+    );
+    out.value = text.trim();
+  } catch (e) { showToast('AI error: ' + e.message); }
+  btn.textContent = orig;
+}
+
+async function aiFillCampaignDesc() {
+  const name = document.getElementById('camp-name').value.trim();
+  const goal = document.getElementById('camp-goal').value;
+  const start = document.getElementById('camp-start').value;
+  const end = document.getElementById('camp-end').value;
+  if (!name) { showToast('Enter a campaign name first'); return; }
+  const btn = document.getElementById('camp-ai-btn');
+  const out = document.getElementById('camp-desc');
+  const orig = btn.textContent;
+  btn.textContent = '✦ Writing…';
+  try {
+    const text = await callClaude(
+      "You write punchy 2-3 sentence campaign briefs for J Michael's Tavern & Grille in Stuart, FL. Plain text, no markdown.",
+      `Campaign name: "${name}"\nGoal: ${goal}\nDates: ${start || 'TBD'} to ${end || 'TBD'}\n\nWrite a compelling description.`,
+      250
+    );
+    out.value = text.trim();
+  } catch (e) { showToast('AI error: ' + e.message); }
+  btn.textContent = orig;
 }
 
 async function genContent() {

@@ -127,6 +127,35 @@ export default {
     const user = await getUser(db, request);
     if (!user) return err('Unauthorized', 401);
 
+    // ── AI (Claude proxy) ────────────────────────────────────────────────────
+    if (path === '/api/ai/generate' && method === 'POST') {
+      const { system, prompt, max_tokens } = body;
+      if (!prompt) return err('Prompt required');
+      if (!env.ANTHROPIC_API_KEY) return err('AI not configured', 500);
+      try {
+        const r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': env.ANTHROPIC_API_KEY,
+            'anthropic-version': '2023-06-01',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-6',
+            max_tokens: max_tokens || 1000,
+            system: system || 'You are a helpful assistant.',
+            messages: [{ role: 'user', content: prompt }],
+          }),
+        });
+        const data = await r.json();
+        if (!r.ok) return err(data.error?.message || 'AI request failed', r.status);
+        const text = data.content?.map(c => c.text || '').join('') || '';
+        return json({ text });
+      } catch (e) {
+        return err('AI error: ' + e.message, 500);
+      }
+    }
+
     // ── IMAGES (R2) ──────────────────────────────────────────────────────────
     if (path === '/api/images' && method === 'GET') {
       const list = await env.IMAGES.list({ prefix: 'photos/' });
