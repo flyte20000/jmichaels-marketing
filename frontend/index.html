@@ -1405,8 +1405,23 @@ async function loadPhotos() {
   try {
     const p = await api('/api/images');
     if (!p.length) { g.innerHTML = '<div class="empty">No photos yet.</div>'; return; }
-    g.innerHTML = p.map(x => `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden"><img src="${x.url}" style="width:100%;height:120px;object-fit:cover"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><button class="btn-o" style="font-size:10px;padding:2px 8px;margin-top:4px" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy URL</button></div></div>`).join('');
+    g.innerHTML = p.map(x => {
+      const safeKey = x.key.replace(/'/g, "\\'");
+      const safeName = (x.name || '').replace(/'/g, "\\'");
+      return `<div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden" oncontextmenu="event.preventDefault();delPhoto('${safeKey}','${safeName}')"><img src="${x.url}" style="width:100%;height:120px;object-fit:cover" title="Right-click to delete"><div style="padding:6px 8px"><div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy URL</button><button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Delete</button></div></div></div>`;
+    }).join('');
   } catch (e) { g.innerHTML = '<div class="empty">Could not load.</div>'; }
+}
+
+async function delPhoto(key, name) {
+  if (!confirm(`Delete "${name || key}" from storage? This cannot be undone.`)) return;
+  try {
+    await api('/api/images/' + encodeURIComponent(key), 'DELETE');
+    showToast('Photo deleted');
+    loadPhotos();
+  } catch (e) {
+    showToast('Delete failed: ' + (e.message || ''));
+  }
 }
 async function uploadPhotos(input) {
   const files = Array.from(input.files);
