@@ -1468,6 +1468,12 @@ async function renderFolders() {
 function onPhotoDragStart(e, key) {
   e.dataTransfer.setData('text/plain', key);
   e.dataTransfer.effectAllowed = 'move';
+  // Visual feedback on the source card
+  const card = e.currentTarget;
+  setTimeout(() => { card.style.opacity = '0.4'; }, 0); // setTimeout so the drag image is still captured fully
+}
+function onPhotoDragEnd(e) {
+  e.currentTarget.style.opacity = '';
 }
 function onFolderDragOver(e) {
   e.preventDefault();
@@ -1483,12 +1489,33 @@ async function onFolderDrop(e, folder) {
   e.currentTarget.style.outline = '';
   const key = e.dataTransfer.getData('text/plain');
   if (!key) return;
+
+  // Optimistic UI: hide the photo card immediately, update folder counts in sidebar
+  const card = document.querySelector(`[data-photo-key="${key.replace(/"/g, '\\"')}"]`);
+  if (card) {
+    card.style.transition = 'opacity .2s, transform .2s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.8)';
+    setTimeout(() => { card.remove(); }, 200);
+  }
+  // Adjust sidebar counts optimistically
+  const oldFolderName = card?.querySelector('div div > div:first-child')?.textContent?.trim() || '';
+  for (const f of allFolders) {
+    if (f.name === folder) f.count = (f.count || 0) + 1;
+    // We don't know exactly which folder it came from without re-fetching; rely on full refresh after API
+  }
+  showToast(`Moving to "${folder}"…`);
+
   try {
     await api('/api/images/' + encodeURIComponent(key) + '/move', 'POST', { folder });
-    showToast(`Moved to "${folder}"`);
+    // Fire-and-forget refresh — the optimistic update already updated the view
     renderFolders();
+    if (!currentFolder || currentFolder === folder) loadPhotos();
+  } catch (err) {
+    // Restore the card on failure (api() already toasted the real error)
     loadPhotos();
-  } catch (err) {}
+    renderFolders();
+  }
 }
 
 async function selectFolder(name) {
@@ -1566,7 +1593,7 @@ async function loadPhotos() {
       const moveBtn = `<button class="btn-o" style="font-size:10px;padding:2px 8px" onclick="movePhoto('${safeKey}')">Move</button>`;
       const folderTag = x.folder ? `<div style="font-size:9px;color:var(--gold2);text-transform:uppercase;letter-spacing:1px">${x.folder}</div>` : '<div style="font-size:9px;color:var(--t2);font-style:italic">unfiled</div>';
       const imgTitle = isAdmin ? 'Right-click to delete' : '';
-      return `<div draggable="true" ondragstart="onPhotoDragStart(event,'${safeKey}')" style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:grab" ${ctx}><img src="${x.url}" style="width:100%;height:120px;object-fit:cover;pointer-events:none" title="${imgTitle || 'Drag onto a folder to move'}"><div style="padding:6px 8px">${folderTag}<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy</button>${moveBtn}${delBtn}</div></div></div>`;
+      return `<div draggable="true" data-photo-key="${x.key}" ondragstart="onPhotoDragStart(event,'${safeKey}')" ondragend="onPhotoDragEnd(event)" style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:grab;user-select:none;transition:opacity .15s,transform .15s" ${ctx}><img src="${x.url}" draggable="false" style="width:100%;height:120px;object-fit:cover;pointer-events:none" title="${imgTitle || 'Drag onto a folder to move'}"><div style="padding:6px 8px">${folderTag}<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy</button>${moveBtn}${delBtn}</div></div></div>`;
     }).join('');
   } catch (e) { g.innerHTML = '<div class="empty">Could not load.</div>'; }
 }

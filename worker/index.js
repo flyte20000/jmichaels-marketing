@@ -177,7 +177,9 @@ export default {
             folder: fld,
           };
         });
-      return json(images.reverse());
+      // Sort newest first by upload date
+      images.sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
+      return json(images);
     }
 
     if (path === '/api/images/upload' && method === 'POST') {
@@ -227,11 +229,6 @@ export default {
         await env.IMAGES.delete(key);
       } catch (e) {
         return err('Wrote new photo but failed to delete old: ' + e.message, 500);
-      }
-      // Verify the delete actually took effect
-      const check = await env.IMAGES.head(key);
-      if (check) {
-        return err('Delete reported success but old photo is still present at: ' + key, 500);
       }
       // Update any DB rows that reference the old URL so they don't 404
       await Promise.all([
