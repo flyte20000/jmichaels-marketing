@@ -204,7 +204,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
 
   <div class="tabbar">
     <div class="tab active" data-t="generate" onclick="switchTab('generate')">✦ Generate</div>
-    <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Photos</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
+    <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Media</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
     <div class="tab" data-t="analytics" onclick="switchTab('analytics')">Analytics</div>
     <div class="tab" data-t="scores" onclick="switchTab('scores')">Scores</div>
     <div class="tab" data-t="reminders" onclick="switchTab('reminders')">Reminders <span id="rem-tab-badge" style="display:none;background:var(--orange);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px">0</span></div>
@@ -251,20 +251,28 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div class="outbox" id="outbox"><span style="color:var(--t2);font-style:italic">Generated content appears here…</span></div>
           <div id="gen-photo-preview" style="display:none;margin-top:8px;padding:8px;background:var(--s2);border-radius:var(--rsm);border:1px solid var(--border)">
             <div style="display:flex;align-items:center;gap:10px">
-              <img id="gen-photo-thumb" src="" style="width:54px;height:54px;object-fit:cover;border-radius:6px">
-              <div style="flex:1;font-size:11px;color:var(--t2)">Photo attached — will be saved with this post</div>
+              <div id="gen-photo-thumb-wrap" style="width:54px;height:54px;border-radius:6px;overflow:hidden;background:#000;flex-shrink:0"></div>
+              <div style="flex:1;font-size:11px;color:var(--t2)" id="gen-photo-label">Media attached — will be saved with this post</div>
               <button class="btn-o" style="font-size:10px;padding:3px 8px" onclick="clearGenPhoto()">Remove</button>
             </div>
           </div>
           <div class="row" style="margin-top:8px">
             <button class="btn-o" onclick="copyOut()"><i class="ti ti-copy" style="font-size:12px;margin-right:4px"></i>Copy</button>
-            <button class="btn-o" onclick="openPhotoPicker()">📷 Add Photo</button>
+            <button class="btn-o" onclick="openPhotoPicker()">📷 Add Media</button>
             <button class="btn-o" onclick="saveToLib()">Save to Library</button>
             <button class="btn-o" onclick="saveToCalendar()">Add to Calendar</button>
             <button class="btn-o" onclick="submitApproval()">Submit for Approval</button>
           </div>
           <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- VIDEO PREVIEW MODAL -->
+    <div id="video-preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1100;align-items:center;justify-content:center;padding:20px" onclick="closeVideoPreview()">
+      <div style="position:relative;max-width:90vw;max-height:90vh" onclick="event.stopPropagation()">
+        <button class="bsm" style="position:absolute;top:-40px;right:0;color:var(--gold)" onclick="closeVideoPreview()">✕ Close</button>
+        <video id="video-preview-el" controls autoplay style="max-width:90vw;max-height:85vh;border-radius:var(--r)"></video>
       </div>
     </div>
 
@@ -283,7 +291,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
           <div style="display:flex;align-items:center;gap:8px">
             <span id="picker-upload-status" style="font-size:11px;color:var(--t2)"></span>
             <button class="btn-add" onclick="document.getElementById('picker-upload').click()">Upload new photo</button>
-            <input type="file" id="picker-upload" accept="image/*" style="display:none" onchange="pickerUpload(this)">
+            <input type="file" id="picker-upload" accept="image/*,video/mp4,video/quicktime,video/webm,video/x-m4v" style="display:none" onchange="pickerUpload(this)">
           </div>
         </div>
         <div id="picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;overflow-y:auto;flex:1;padding:4px"></div>
@@ -300,11 +308,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-        <div class="sec" id="photo-folder-title" style="margin:0">All photos</div>
+        <div class="sec" id="photo-folder-title" style="margin:0">All media</div>
         <div style="display:flex;align-items:center;gap:8px">
           <span id="upload-status" style="font-size:11px;color:var(--t2)"></span>
-          <button class="btn-add" onclick="document.getElementById('photo-file').click()">Upload Photos</button>
-          <input type="file" id="photo-file" accept="image/*" multiple style="display:none" onchange="uploadPhotos(this)">
+          <button class="btn-add" onclick="document.getElementById('photo-file').click()">Upload Media</button>
+          <input type="file" id="photo-file" accept="image/*,video/mp4,video/quicktime,video/webm,video/x-m4v" multiple style="display:none" onchange="uploadPhotos(this)">
         </div>
       </div>
       <div id="photo-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px"></div>
@@ -891,12 +899,16 @@ async function openPhotoPicker() {
       grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">No photos in this folder — upload one above.</div>';
       return;
     }
-    grid.innerHTML = photos.map(p => `
-      <div onclick="selectPhoto('${p.url}')" style="cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;transition:border-color .15s;position:relative" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
-        <img src="${p.url}" style="width:100%;height:100px;object-fit:cover;display:block">
+    grid.innerHTML = photos.map(p => {
+      const isV = p.mediaType === 'video' || isVideoUrl(p.url);
+      const inner = isV
+        ? `<div style="position:relative;width:100%;height:100px;background:#000"><video src="${p.url}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25)"><div style="width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,0.7);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px">▶</div></div><div style="position:absolute;top:3px;left:3px;background:var(--gold);color:#1a1a1a;font-size:8px;font-weight:600;padding:1px 4px;border-radius:3px">VIDEO</div></div>`
+        : `<img src="${p.url}" style="width:100%;height:100px;object-fit:cover;display:block">`;
+      return `<div onclick="selectPhoto('${p.url}')" style="cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;transition:border-color .15s;position:relative" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+        ${inner}
         ${p.folder ? `<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:var(--gold2);font-size:9px;padding:2px 4px;letter-spacing:1px">${p.folder}</div>` : ''}
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   } catch (e) {
     grid.innerHTML = '<div style="grid-column:1/-1;color:var(--red);font-size:11px;padding:10px;text-align:center">Could not load photos.</div>';
   }
@@ -908,15 +920,21 @@ function closePhotoPicker() {
 
 function selectPhoto(url) {
   selectedPhotoUrl = url;
-  document.getElementById('gen-photo-thumb').src = url;
+  const isV = isVideoUrl(url);
+  const wrap = document.getElementById('gen-photo-thumb-wrap');
+  wrap.innerHTML = isV
+    ? `<video src="${url}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>`
+    : `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+  document.getElementById('gen-photo-label').textContent = (isV ? 'Video' : 'Photo') + ' attached — will be saved with this post';
   document.getElementById('gen-photo-preview').style.display = 'block';
   closePhotoPicker();
-  showToast('Photo attached');
+  showToast((isV ? 'Video' : 'Photo') + ' attached');
 }
 
 function clearGenPhoto() {
   selectedPhotoUrl = '';
   document.getElementById('gen-photo-preview').style.display = 'none';
+  document.getElementById('gen-photo-thumb-wrap').innerHTML = '';
 }
 
 async function pickerUpload(input) {
@@ -1324,7 +1342,9 @@ async function renderLibrary() {
         <button class="btn-d" style="padding:2px 8px;font-size:10px" onclick="event.stopPropagation();delLib('${item.id}')">Remove</button>
       </div>
       <div style="display:flex;gap:10px;align-items:flex-start">
-        ${item.image_url ? `<img src="${item.image_url}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;flex-shrink:0">` : ''}
+        ${item.image_url ? (isVideoUrl(item.image_url)
+          ? `<div style="position:relative;width:70px;height:70px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#000"><video src="${item.image_url}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:18px;background:rgba(0,0,0,0.2)">▶</div></div>`
+          : `<img src="${item.image_url}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;flex-shrink:0">`) : ''}
         <div style="font-size:12px;color:var(--text);line-height:1.5;flex:1">${item.content.substring(0,120)}${item.content.length>120?'…':''}</div>
       </div>
     </div>`).join('');
@@ -1349,7 +1369,9 @@ async function renderApprovals() {
         <span class="tag tag-pend">Pending</span>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">
-        ${a.image_url ? `<img src="${a.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0">` : ''}
+        ${a.image_url ? (isVideoUrl(a.image_url)
+          ? `<div style="position:relative;width:80px;height:80px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#000;cursor:pointer" onclick="previewVideo('${a.image_url}')"><video src="${a.image_url}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:18px;background:rgba(0,0,0,0.2)">▶</div></div>`
+          : `<img src="${a.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0">`) : ''}
         <div style="font-size:12px;color:var(--text);line-height:1.6;flex:1">${a.content.substring(0,200)}${a.content.length>200?'…':''}</div>
       </div>
       ${CU.role==='admin'?`<div style="display:flex;gap:8px"><button class="btn-approve" onclick="approvePost('${a.id}','${a.platform}','${a.content.replace(/'/g,"\\'")}')">Approve & Schedule</button><button class="btn-reject" onclick="rejectPost('${a.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--t2)">Awaiting admin review</div>'}
@@ -1466,6 +1488,21 @@ async function renderFolders() {
       <span style="display:flex;align-items:center;gap:2px">${actions}<span style="font-size:10px;opacity:.7;margin-left:4px">${r.count}</span></span>
     </div>`;
   }).join('');
+}
+
+function isVideoUrl(url) {
+  return /\.(mp4|mov|webm|m4v)(\?|$)/i.test(url || '');
+}
+function previewVideo(url) {
+  const v = document.getElementById('video-preview-el');
+  v.src = url;
+  document.getElementById('video-preview-modal').style.display = 'flex';
+}
+function closeVideoPreview() {
+  const v = document.getElementById('video-preview-el');
+  v.pause();
+  v.src = '';
+  document.getElementById('video-preview-modal').style.display = 'none';
 }
 
 function onPhotoDragStart(e, key) {
@@ -1592,11 +1629,15 @@ async function loadPhotos() {
       const safeKey = x.key.replace(/'/g, "\\'");
       const safeName = (x.name || '').replace(/'/g, "\\'");
       const ctx = isAdmin ? `oncontextmenu="event.preventDefault();delPhoto('${safeKey}','${safeName}')"` : '';
-      const delBtn = isAdmin ? `<button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="delPhoto('${safeKey}','${safeName}')">Del</button>` : '';
-      const moveBtn = `<button class="btn-o" style="font-size:10px;padding:2px 8px" onclick="movePhoto('${safeKey}')">Move</button>`;
+      const delBtn = isAdmin ? `<button class="btn-d" style="font-size:10px;padding:2px 8px" onclick="event.stopPropagation();delPhoto('${safeKey}','${safeName}')">Del</button>` : '';
+      const moveBtn = `<button class="btn-o" style="font-size:10px;padding:2px 8px" onclick="event.stopPropagation();movePhoto('${safeKey}')">Move</button>`;
       const folderTag = x.folder ? `<div style="font-size:9px;color:var(--gold2);text-transform:uppercase;letter-spacing:1px">${x.folder}</div>` : '<div style="font-size:9px;color:var(--t2);font-style:italic">unfiled</div>';
       const imgTitle = isAdmin ? 'Right-click to delete' : '';
-      return `<div draggable="true" data-photo-key="${x.key}" ondragstart="onPhotoDragStart(event,'${safeKey}')" ondragend="onPhotoDragEnd(event)" style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:grab;user-select:none;transition:opacity .15s,transform .15s" ${ctx}><img src="${x.url}" draggable="false" style="width:100%;height:120px;object-fit:cover;pointer-events:none" title="${imgTitle || 'Drag onto a folder to move'}"><div style="padding:6px 8px">${folderTag}<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy</button>${moveBtn}${delBtn}</div></div></div>`;
+      const isVideo = x.mediaType === 'video';
+      const thumb = isVideo
+        ? `<div style="position:relative;width:100%;height:120px;background:#000;display:flex;align-items:center;justify-content:center;pointer-events:none"><video src="${x.url}" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;pointer-events:none"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);pointer-events:none"><div style="width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:14px">▶</div></div><div style="position:absolute;top:4px;left:4px;background:var(--gold);color:#1a1a1a;font-size:9px;font-weight:600;padding:1px 5px;border-radius:3px;letter-spacing:1px">VIDEO</div></div>`
+        : `<img src="${x.url}" draggable="false" style="width:100%;height:120px;object-fit:cover;pointer-events:none" title="${imgTitle || 'Drag onto a folder to move'}">`;
+      return `<div draggable="true" data-photo-key="${x.key}" ondragstart="onPhotoDragStart(event,'${safeKey}')" ondragend="onPhotoDragEnd(event)" onclick="${isVideo ? `previewVideo('${x.url}')` : ''}" style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:grab;user-select:none;transition:opacity .15s,transform .15s" ${ctx}>${thumb}<div style="padding:6px 8px">${folderTag}<div style="font-size:10px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.name}</div><div style="display:flex;gap:4px;margin-top:4px"><button class="btn-o" style="font-size:10px;padding:2px 8px;flex:1" onclick="event.stopPropagation();navigator.clipboard.writeText('${x.url}').then(()=>showToast('URL copied!'))">Copy</button>${moveBtn}${delBtn}</div></div></div>`;
     }).join('');
   } catch (e) { g.innerHTML = '<div class="empty">Could not load.</div>'; }
 }

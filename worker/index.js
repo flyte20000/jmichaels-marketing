@@ -168,6 +168,9 @@ export default {
           const fname = parts[parts.length - 1];
           const fld = parts.length >= 3 ? parts.slice(1, -1).join('/') : '';
           const takenAt = obj.customMetadata?.takenAt || null;
+          const ext = (fname.split('.').pop() || '').toLowerCase();
+          const videoExts = ['mp4', 'mov', 'webm', 'm4v'];
+          const inferredType = videoExts.includes(ext) ? 'video' : 'image';
           return {
             key: obj.key,
             url: `${R2_PUBLIC}/${obj.key}`,
@@ -178,6 +181,7 @@ export default {
             name: obj.customMetadata?.originalName || fname,
             uploadedBy: obj.customMetadata?.uploadedBy || '',
             folder: fld,
+            mediaType: obj.customMetadata?.mediaType || inferredType,
           };
         });
       // Sort newest first by date taken (falling back to upload date if no EXIF)
@@ -192,18 +196,23 @@ export default {
       const takenAt = (formData.get('taken_at') || '').toString().trim();
       if (!file) return err('No file provided');
       const ext = file.name.split('.').pop().toLowerCase();
-      const allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-      if (!allowed.includes(ext)) return err('Invalid file type. Use JPG, PNG, GIF or WebP');
-      if (file.size > 10 * 1024 * 1024) return err('File too large. Max 10MB');
+      const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+      const videoExts = ['mp4', 'mov', 'webm', 'm4v'];
+      let mediaType;
+      if (imageExts.includes(ext)) mediaType = 'image';
+      else if (videoExts.includes(ext)) mediaType = 'video';
+      else return err('Invalid file type. Use JPG/PNG/GIF/WebP for photos or MP4/MOV/WebM/M4V for video');
+      const maxSize = mediaType === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > maxSize) return err(`File too large. Max ${mediaType === 'video' ? '100MB' : '10MB'}`);
       const safeFolder = folder.replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60) || 'Inbox';
       const key = `photos/${safeFolder}/${Date.now()}-${randId(6)}.${ext}`;
-      const cm = { uploadedBy: user.username, originalName: file.name, folder: safeFolder };
+      const cm = { uploadedBy: user.username, originalName: file.name, folder: safeFolder, mediaType };
       if (takenAt) cm.takenAt = takenAt;
       await env.IMAGES.put(key, file.stream(), {
         httpMetadata: { contentType: file.type },
         customMetadata: cm,
       });
-      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name, folder: safeFolder, takenAt: takenAt || null });
+      return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, name: file.name, folder: safeFolder, takenAt: takenAt || null, mediaType });
     }
 
     if (path.startsWith('/api/images/') && path.endsWith('/move') && method === 'POST') {
