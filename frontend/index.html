@@ -233,14 +233,38 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
         <div class="card" style="display:flex;flex-direction:column;gap:10px">
           <div class="sec">Output</div>
           <div class="outbox" id="outbox"><span style="color:var(--t2);font-style:italic">Generated content appears here…</span></div>
-          <div class="row">
+          <div id="gen-photo-preview" style="display:none;margin-top:8px;padding:8px;background:var(--s2);border-radius:var(--rsm);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <img id="gen-photo-thumb" src="" style="width:54px;height:54px;object-fit:cover;border-radius:6px">
+              <div style="flex:1;font-size:11px;color:var(--t2)">Photo attached — will be saved with this post</div>
+              <button class="btn-o" style="font-size:10px;padding:3px 8px" onclick="clearGenPhoto()">Remove</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px">
             <button class="btn-o" onclick="copyOut()"><i class="ti ti-copy" style="font-size:12px;margin-right:4px"></i>Copy</button>
+            <button class="btn-o" onclick="openPhotoPicker()">📷 Add Photo</button>
             <button class="btn-o" onclick="saveToLib()">Save to Library</button>
             <button class="btn-o" onclick="saveToCalendar()">Add to Calendar</button>
             <button class="btn-o" onclick="submitApproval()">Submit for Approval</button>
           </div>
           <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- PHOTO PICKER MODAL (overlay) -->
+    <div id="photo-picker-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;max-width:720px;width:100%;max-height:80vh;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div class="sec" style="margin:0">Choose a photo</div>
+          <button class="bsm" onclick="closePhotoPicker()">✕</button>
+        </div>
+        <div style="margin-bottom:.75rem">
+          <button class="btn-add" onclick="document.getElementById('picker-upload').click()">Upload new photo</button>
+          <input type="file" id="picker-upload" accept="image/*" style="display:none" onchange="pickerUpload(this)">
+          <span id="picker-upload-status" style="font-size:11px;color:var(--t2);margin-left:8px"></span>
+        </div>
+        <div id="picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;overflow-y:auto;flex:1;padding:4px"></div>
       </div>
     </div>
 
@@ -490,7 +514,7 @@ const API = 'https://jmichaels-marketing-api.kurt-307.workers.dev';
 let TOKEN = localStorage.getItem('jm_token');
 let CU = null;
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
-let editPid = null, genOut = '', revOut = '';
+let editPid = null, genOut = '', revOut = '', selectedPhotoUrl = '';
 let engChart = null, scoreChart = null;
 
 const pnames = {fb:'Facebook',ig:'Instagram',em:'Email',gg:'Google',yelp:'Yelp',sms:'SMS',trip:'TripAdvisor'};
@@ -712,9 +736,10 @@ function copyOut() {
 
 async function saveToLib() {
   if (!genOut) { showToast('Generate content first'); return; }
-  await api('/api/library', 'POST', { content: genOut, platform: platMap[document.getElementById('gplat').value] || 'fb' });
+  await api('/api/library', 'POST', { content: genOut, platform: platMap[document.getElementById('gplat').value] || 'fb', image_url: selectedPhotoUrl });
   showToast('Saved to library!');
-  document.getElementById('gen-conf').textContent = 'Saved to Content Library';
+  document.getElementById('gen-conf').textContent = 'Saved to Content Library' + (selectedPhotoUrl ? ' (with photo)' : '');
+  clearGenPhoto();
 }
 
 async function saveToCalendar() {
@@ -724,18 +749,79 @@ async function saveToCalendar() {
     platform: platMap[document.getElementById('gplat').value] || 'fb',
     content: genOut,
     status: 'draft',
+    image_url: selectedPhotoUrl,
   });
   showToast('Added to calendar!');
-  document.getElementById('gen-conf').textContent = 'Added to Calendar as draft';
+  document.getElementById('gen-conf').textContent = 'Added to Calendar as draft' + (selectedPhotoUrl ? ' (with photo)' : '');
+  clearGenPhoto();
 }
 
 async function submitApproval() {
   if (!genOut) { showToast('Generate content first'); return; }
-  await api('/api/approvals', 'POST', { content: genOut, platform: document.getElementById('gplat').value });
+  await api('/api/approvals', 'POST', { content: genOut, platform: document.getElementById('gplat').value, image_url: selectedPhotoUrl });
   await api('/api/notifications', 'POST', { title: 'New approval request', description: CU.username + ' submitted content for approval', type: 'approval' });
   showToast('Submitted for approval!');
-  document.getElementById('gen-conf').textContent = 'Submitted for Admin approval';
+  document.getElementById('gen-conf').textContent = 'Submitted for Admin approval' + (selectedPhotoUrl ? ' (with photo)' : '');
+  clearGenPhoto();
   renderApprovals();
+}
+
+// ── PHOTO PICKER ─────────────────────────────────────────────────────────────
+async function openPhotoPicker() {
+  document.getElementById('photo-picker-modal').style.display = 'flex';
+  const grid = document.getElementById('picker-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">Loading photos…</div>';
+  try {
+    const photos = await api('/api/images');
+    if (!photos.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;color:var(--t2);font-size:11px;padding:10px;text-align:center">No photos yet — upload one above.</div>';
+      return;
+    }
+    grid.innerHTML = photos.map(p => `
+      <div onclick="selectPhoto('${p.url}')" style="cursor:pointer;border:2px solid transparent;border-radius:6px;overflow:hidden;transition:border-color .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='transparent'">
+        <img src="${p.url}" style="width:100%;height:100px;object-fit:cover;display:block">
+      </div>
+    `).join('');
+  } catch (e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;color:var(--red);font-size:11px;padding:10px;text-align:center">Could not load photos.</div>';
+  }
+}
+
+function closePhotoPicker() {
+  document.getElementById('photo-picker-modal').style.display = 'none';
+}
+
+function selectPhoto(url) {
+  selectedPhotoUrl = url;
+  document.getElementById('gen-photo-thumb').src = url;
+  document.getElementById('gen-photo-preview').style.display = 'block';
+  closePhotoPicker();
+  showToast('Photo attached');
+}
+
+function clearGenPhoto() {
+  selectedPhotoUrl = '';
+  document.getElementById('gen-photo-preview').style.display = 'none';
+}
+
+async function pickerUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('picker-upload-status');
+  status.textContent = 'Uploading…';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch(API + '/api/images/upload', { method: 'POST', headers: { Authorization: `Bearer ${TOKEN}` }, body: fd });
+    if (!r.ok) throw new Error('Upload failed');
+    const data = await r.json();
+    status.textContent = '';
+    input.value = '';
+    if (data.url) selectPhoto(data.url);
+    else openPhotoPicker(); // refresh
+  } catch (e) {
+    status.textContent = 'Upload failed';
+  }
 }
 
 async function renderCalendar() {
@@ -1118,7 +1204,10 @@ async function renderLibrary() {
         <span style="font-size:10px;color:var(--t2)">${pnames[item.platform]||item.platform} · ${fdate(item.saved_at)} · by ${item.saved_by}</span>
         <button class="btn-d" style="padding:2px 8px;font-size:10px" onclick="event.stopPropagation();delLib('${item.id}')">Remove</button>
       </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.5">${item.content.substring(0,120)}${item.content.length>120?'…':''}</div>
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        ${item.image_url ? `<img src="${item.image_url}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;flex-shrink:0">` : ''}
+        <div style="font-size:12px;color:var(--text);line-height:1.5;flex:1">${item.content.substring(0,120)}${item.content.length>120?'…':''}</div>
+      </div>
     </div>`).join('');
 }
 async function useLibItem(id) {
@@ -1140,7 +1229,10 @@ async function renderApprovals() {
         <div><span style="font-size:12px;font-weight:500;color:var(--text)">${a.platform}</span><span style="font-size:10px;color:var(--t2);margin-left:8px">by ${a.submitted_by} · ${fdate(a.submitted_at)}</span></div>
         <span class="tag tag-pend">Pending</span>
       </div>
-      <div style="font-size:12px;color:var(--text);line-height:1.6;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">${a.content.substring(0,200)}${a.content.length>200?'…':''}</div>
+      <div style="display:flex;gap:10px;margin-bottom:.75rem;padding:8px;background:var(--s2);border-radius:var(--rsm)">
+        ${a.image_url ? `<img src="${a.image_url}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0">` : ''}
+        <div style="font-size:12px;color:var(--text);line-height:1.6;flex:1">${a.content.substring(0,200)}${a.content.length>200?'…':''}</div>
+      </div>
       ${CU.role==='admin'?`<div style="display:flex;gap:8px"><button class="btn-approve" onclick="approvePost('${a.id}','${a.platform}','${a.content.replace(/'/g,"\\'")}')">Approve & Schedule</button><button class="btn-reject" onclick="rejectPost('${a.id}')">Reject</button></div>`:'<div style="font-size:11px;color:var(--t2)">Awaiting admin review</div>'}
     </div>`).join('');
 }

@@ -283,10 +283,17 @@ export default {
     if (path.startsWith('/api/posts/') && method === 'PUT') {
       const id = path.split('/')[3];
       const { date, platform, content, status, image_url } = body;
-      await db
-        .prepare('UPDATE posts SET date=?, platform=?, content=?, status=?, image_url=? WHERE id=?')
-        .bind(date, platform, content, status, image_url || '', id)
-        .run();
+      if (image_url !== undefined) {
+        await db
+          .prepare('UPDATE posts SET date=?, platform=?, content=?, status=?, image_url=? WHERE id=?')
+          .bind(date, platform, content, status, image_url || '', id)
+          .run();
+      } else {
+        await db
+          .prepare('UPDATE posts SET date=?, platform=?, content=?, status=? WHERE id=?')
+          .bind(date, platform, content, status, id)
+          .run();
+      }
       return json({ success: true });
     }
 
@@ -361,12 +368,12 @@ export default {
     }
 
     if (path === '/api/approvals' && method === 'POST') {
-      const { content, platform } = body;
+      const { content, platform, image_url } = body;
       if (!content) return err('Content required');
       const id = randId(8);
       await db
-        .prepare('INSERT INTO approvals (id, content, platform, status, submitted_by, submitted_at) VALUES (?, ?, ?, "pending", ?, ?)')
-        .bind(id, content, platform||'', user.username, new Date().toISOString())
+        .prepare('INSERT INTO approvals (id, content, platform, status, submitted_by, submitted_at, image_url) VALUES (?, ?, ?, "pending", ?, ?, ?)')
+        .bind(id, content, platform||'', user.username, new Date().toISOString(), image_url || '')
         .run();
       return json({ success: true, id });
     }
@@ -391,12 +398,12 @@ export default {
     }
 
     if (path === '/api/library' && method === 'POST') {
-      const { content, platform } = body;
+      const { content, platform, image_url } = body;
       if (!content) return err('Content required');
       const id = randId(8);
       await db
-        .prepare('INSERT INTO library (id, content, platform, saved_by, saved_at) VALUES (?, ?, ?, ?, ?)')
-        .bind(id, content, platform||'fb', user.username, new Date().toISOString())
+        .prepare('INSERT INTO library (id, content, platform, saved_by, saved_at, image_url) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(id, content, platform||'fb', user.username, new Date().toISOString(), image_url || '')
         .run();
       return json({ success: true, id });
     }
