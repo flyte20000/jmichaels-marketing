@@ -205,19 +205,34 @@ export default {
       const safeFolder = String(folder).replace(/[^A-Za-z0-9 _-]/g, '').slice(0, 60);
       if (!safeFolder) return err('Invalid folder name');
       const obj = await env.IMAGES.get(key);
-      if (!obj) return err('Photo not found', 404);
+      if (!obj) return err('Photo not found at key: ' + key, 404);
       const fname = key.split('/').pop();
       const newKey = `photos/${safeFolder}/${fname}`;
-      if (newKey === key) return json({ success: true, key, url: `${R2_PUBLIC}/${key}` });
+      if (newKey === key) return json({ success: true, key, url: `${R2_PUBLIC}/${key}`, note: 'already in folder' });
       const oldUrl = `${R2_PUBLIC}/${key}`;
       const newUrl = `${R2_PUBLIC}/${newKey}`;
       const md = obj.customMetadata || {};
       md.folder = safeFolder;
-      await env.IMAGES.put(newKey, obj.body, {
-        httpMetadata: obj.httpMetadata,
-        customMetadata: md,
-      });
-      await env.IMAGES.delete(key);
+      try {
+        // Fully buffer the body so put() doesn't race with anything
+        const buf = await obj.arrayBuffer();
+        await env.IMAGES.put(newKey, buf, {
+          httpMetadata: obj.httpMetadata,
+          customMetadata: md,
+        });
+      } catch (e) {
+        return err('Failed to write new photo: ' + e.message, 500);
+      }
+      try {
+        await env.IMAGES.delete(key);
+      } catch (e) {
+        return err('Wrote new photo but failed to delete old: ' + e.message, 500);
+      }
+      // Verify the delete actually took effect
+      const check = await env.IMAGES.head(key);
+      if (check) {
+        return err('Delete reported success but old photo is still present at: ' + key, 500);
+      }
       // Update any DB rows that reference the old URL so they don't 404
       await Promise.all([
         db.prepare('UPDATE posts SET image_url=? WHERE image_url=?').bind(newUrl, oldUrl).run(),
