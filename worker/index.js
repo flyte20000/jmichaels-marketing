@@ -589,6 +589,80 @@ export default {
       return json({ success: true });
     }
 
+    if (path === '/api/send/email/preview' && method === 'POST') {
+      // Compute the recipient list without sending
+      const { recipients, tag } = body;
+      let contacts;
+      if (recipients === 'tag' && tag) {
+        const t = tag.toLowerCase();
+        const { results } = await db.prepare('SELECT id, name, email, tags FROM contacts WHERE opt_in_email = 1 AND email != ""').all();
+        contacts = results.filter(r => (r.tags || '').toLowerCase().split(',').map(s => s.trim()).includes(t));
+      } else {
+        const { results } = await db.prepare('SELECT id, name, email FROM contacts WHERE opt_in_email = 1 AND email != ""').all();
+        contacts = results;
+      }
+      return json({ count: contacts.length, sample: contacts.slice(0, 5).map(c => c.email) });
+    }
+
+    if (path === '/api/send/email' && method === 'POST') {
+      if (!env.RESEND_API_KEY) return err('Email not configured', 500);
+      const { subject, body: emailBody, recipients, tag, from_name, from_email } = body;
+      if (!subject || !subject.trim()) return err('Subject required');
+      if (!emailBody || !emailBody.trim()) return err('Body required');
+      const fromEmail = (from_email || 'onboarding@resend.dev').trim();
+      const fromName = (from_name || "J Michael's Tavern & Grille").trim();
+      const from = `${fromName} <${fromEmail}>`;
+
+      // Get recipients (only opted-in, with an email address)
+      const { results: all } = await db.prepare('SELECT id, name, email, tags FROM contacts WHERE opt_in_email = 1 AND email != ""').all();
+      let contacts = all;
+      if (recipients === 'tag' && tag) {
+        const t = tag.toLowerCase();
+        contacts = all.filter(r => (r.tags || '').toLowerCase().split(',').map(s => s.trim()).includes(t));
+      }
+      if (!contacts.length) return err('No opted-in recipients match');
+
+      // Build a basic HTML wrapper around the body (convert newlines to <br>)
+      const safeBody = emailBody.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const html = `<!DOCTYPE html><html><body style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#1a1a1a;max-width:600px;margin:0 auto;padding:20px"><div style="white-space:pre-wrap">${safeBody}</div><hr style="border:none;border-top:1px solid #e5e5e5;margin:30px 0 12px"><div style="font-size:11px;color:#888;text-align:center">You're receiving this because you signed up with ${fromName}. To stop receiving these, reply with "unsubscribe".</div></body></html>`;
+
+      // Send in batches of 100
+      let sent = 0, failed = 0;
+      const errors = [];
+      for (let i = 0; i < contacts.length; i += 100) {
+        const batch = contacts.slice(i, i + 100);
+        const payload = batch.map(c => ({
+          from,
+          to: [c.email],
+          subject,
+          html,
+          text: emailBody,
+        }));
+        try {
+          const r = await fetch('https://api.resend.com/emails/batch', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          if (r.ok) {
+            sent += batch.length;
+          } else {
+            const errData = await r.json().catch(() => ({}));
+            failed += batch.length;
+            errors.push(errData.message || errData.error || `HTTP ${r.status}`);
+          }
+        } catch (e) {
+          failed += batch.length;
+          errors.push(e.message);
+        }
+      }
+
+      return json({ success: failed === 0, sent, failed, total: contacts.length, errors: errors.slice(0, 3) });
+    }
+
     if (path === '/api/contacts/import' && method === 'POST') {
       const { rows } = body; // array of {name, email, phone, tags, source, notes}
       if (!Array.isArray(rows) || !rows.length) return err('rows array required');

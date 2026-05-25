@@ -233,13 +233,13 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
               <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2);cursor:pointer;font-weight:400;margin:0"><input type="checkbox" id="tailor-toggle">Tailor each platform separately</label>
             </div>
             <div id="gplat-group" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:9px 11px;background:var(--s2);border-radius:var(--rsm);border:1px solid var(--border)">
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="fb" checked>Facebook</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="ig">Instagram</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="em">Email</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="gg">Google</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="sms">SMS</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="yelp">Yelp</label>
-              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="trip">TripAdvisor</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="fb" onchange="updateSendEmailButton()" checked>Facebook</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="ig" onchange="updateSendEmailButton()">Instagram</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="em" onchange="updateSendEmailButton()">Email</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="gg" onchange="updateSendEmailButton()">Google</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="sms" onchange="updateSendEmailButton()">SMS</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="yelp" onchange="updateSendEmailButton()">Yelp</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;color:var(--text)"><input type="checkbox" class="gplat-cb" value="trip" onchange="updateSendEmailButton()">TripAdvisor</label>
             </div>
           </div>
           <div class="f"><label>Tone</label>
@@ -263,9 +263,43 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
             <button class="btn-o" onclick="saveToLib()">Save to Library</button>
             <button class="btn-o" onclick="saveToCalendar()">Add to Calendar</button>
             <button class="btn-o" onclick="submitApproval()">Submit for Approval</button>
+            <button class="btn-o" id="send-email-btn" style="display:none" onclick="openSendEmail()">📤 Send Email Now</button>
           </div>
           <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- SEND EMAIL MODAL -->
+    <div id="send-email-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1050;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:1.25rem;max-width:640px;width:100%;max-height:90vh;overflow-y:auto" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div class="sec" style="margin:0">Send Email</div>
+          <button class="bsm" onclick="closeSendEmail()">✕</button>
+        </div>
+        <div class="g2" style="gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>From name</label><input id="se-from-name" value="J Michael's Tavern & Grille"></div>
+          <div class="f" style="margin:0"><label>From email</label><input id="se-from-email" value="onboarding@resend.dev"></div>
+        </div>
+        <div class="f"><label>Subject</label><input id="se-subject" placeholder="Subject line"></div>
+        <div class="f"><label>Body</label><textarea id="se-body" rows="8" style="width:100%;font-family:inherit"></textarea></div>
+        <div class="g2" style="gap:10px;margin-bottom:10px">
+          <div class="f" style="margin:0"><label>Send to</label>
+            <select id="se-recipients" onchange="onSendRecipChange()">
+              <option value="all">All opted-in contacts</option>
+              <option value="tag">Filter by tag</option>
+            </select>
+          </div>
+          <div class="f" id="se-tag-wrap" style="margin:0;display:none"><label>Tag</label>
+            <select id="se-tag" onchange="updateSendPreview()"></select>
+          </div>
+        </div>
+        <div id="se-preview" style="background:var(--s2);border-radius:var(--rsm);padding:10px 12px;font-size:12px;color:var(--t2);margin-bottom:1rem">Calculating recipients…</div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-o" onclick="closeSendEmail()">Cancel</button>
+          <button class="btn-add" id="se-send-btn" onclick="confirmSendEmail()">Send</button>
+        </div>
+        <div id="se-status" style="margin-top:10px;font-size:11px;color:var(--t2)"></div>
       </div>
     </div>
 
@@ -815,6 +849,99 @@ function getSelectedPlatforms() {
   return checked.length ? checked : ['fb'];
 }
 
+function updateSendEmailButton() {
+  const btn = document.getElementById('send-email-btn');
+  if (!btn) return;
+  const hasEmail = getSelectedPlatforms().includes('em');
+  const hasContent = Object.keys(genOutByPlatform).length > 0 || !!genOut;
+  btn.style.display = (hasEmail && hasContent) ? 'inline-block' : 'none';
+}
+
+async function openSendEmail() {
+  const emailContent = genOutByPlatform['em'] || genOut || '';
+  if (!emailContent.trim()) { showToast('Generate content first'); return; }
+  // Try to parse a "Subject: ..." line from the content
+  let subject = '', body = emailContent;
+  const m = emailContent.match(/^\s*Subject:\s*(.+?)\s*\n+([\s\S]*)$/i);
+  if (m) { subject = m[1].trim(); body = m[2].trim(); }
+  document.getElementById('se-subject').value = subject;
+  document.getElementById('se-body').value = body;
+  document.getElementById('se-status').textContent = '';
+  document.getElementById('send-email-modal').style.display = 'flex';
+
+  // Populate tag dropdown from contacts
+  try {
+    const contacts = await api('/api/contacts');
+    const tags = new Set();
+    contacts.forEach(c => (c.tags || '').split(',').map(s => s.trim()).filter(Boolean).forEach(t => tags.add(t)));
+    const tagSel = document.getElementById('se-tag');
+    tagSel.innerHTML = [...tags].sort().map(t => `<option value="${t}">${t}</option>`).join('');
+  } catch {}
+  updateSendPreview();
+}
+
+function closeSendEmail() {
+  document.getElementById('send-email-modal').style.display = 'none';
+}
+
+function onSendRecipChange() {
+  const v = document.getElementById('se-recipients').value;
+  document.getElementById('se-tag-wrap').style.display = v === 'tag' ? '' : 'none';
+  updateSendPreview();
+}
+
+async function updateSendPreview() {
+  const recipients = document.getElementById('se-recipients').value;
+  const tag = document.getElementById('se-tag').value || '';
+  const prev = document.getElementById('se-preview');
+  prev.textContent = 'Calculating recipients…';
+  try {
+    const r = await api('/api/send/email/preview', 'POST', { recipients, tag });
+    if (r.count === 0) {
+      prev.innerHTML = '<span style="color:var(--red)">No opted-in contacts match.</span>';
+    } else {
+      const sample = r.sample.slice(0, 3).join(', ') + (r.count > 3 ? `, +${r.count - 3} more` : '');
+      prev.innerHTML = `Will send to <strong style="color:var(--text)">${r.count}</strong> opted-in contact${r.count !== 1 ? 's' : ''}: <span style="color:var(--t2)">${escapeHtml(sample)}</span>`;
+    }
+  } catch (e) {
+    prev.textContent = 'Could not preview';
+  }
+}
+
+async function confirmSendEmail() {
+  const payload = {
+    subject: document.getElementById('se-subject').value.trim(),
+    body: document.getElementById('se-body').value.trim(),
+    recipients: document.getElementById('se-recipients').value,
+    tag: document.getElementById('se-tag').value || '',
+    from_name: document.getElementById('se-from-name').value.trim(),
+    from_email: document.getElementById('se-from-email').value.trim(),
+  };
+  if (!payload.subject) { showToast('Subject required'); return; }
+  if (!payload.body) { showToast('Body required'); return; }
+  const prevText = document.getElementById('se-preview').textContent;
+  const recipMatch = prevText.match(/Will send to (\d+)/);
+  const count = recipMatch ? recipMatch[1] : '?';
+  if (!confirm(`Send this email to ${count} contact${count !== '1' ? 's' : ''}?\n\nThis cannot be undone.`)) return;
+  const btn = document.getElementById('se-send-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+  const status = document.getElementById('se-status');
+  status.textContent = '';
+  try {
+    const r = await api('/api/send/email', 'POST', payload);
+    if (r.failed) {
+      status.innerHTML = `<span style="color:${r.sent ? 'var(--orange)' : 'var(--red)'}">Sent ${r.sent} of ${r.total}. ${r.failed} failed.${r.errors?.length ? ' ' + r.errors[0] : ''}</span>`;
+    } else {
+      status.innerHTML = `<span style="color:var(--green)">✓ Sent ${r.sent} email${r.sent !== 1 ? 's' : ''} successfully.</span>`;
+      setTimeout(() => closeSendEmail(), 2000);
+      showToast(`Sent ${r.sent} emails`);
+    }
+  } catch (e) {
+    status.innerHTML = `<span style="color:var(--red)">Send failed</span>`;
+  }
+  btn.disabled = false; btn.textContent = 'Send';
+}
+
 async function genContent() {
   const prompt = document.getElementById('cprompt').value.trim();
   const plats = getSelectedPlatforms();
@@ -858,6 +985,7 @@ async function genContent() {
   } catch (e) { out.innerHTML = '<span style="color:var(--red)">Error generating: ' + (e.message || '') + '</span>'; }
   btn.disabled = false;
   btn.textContent = 'Generate Content';
+  updateSendEmailButton();
 }
 
 function copyOut() {
