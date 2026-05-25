@@ -542,6 +542,76 @@ export default {
       return json({ success: true });
     }
 
+    // ── CONTACTS ─────────────────────────────────────────────────────────────
+    if (path === '/api/contacts' && method === 'GET') {
+      const q = (url.searchParams.get('q') || '').trim();
+      const tag = (url.searchParams.get('tag') || '').trim();
+      let rows;
+      if (q) {
+        const like = `%${q}%`;
+        rows = (await db.prepare(
+          'SELECT * FROM contacts WHERE name LIKE ? OR email LIKE ? OR phone LIKE ? ORDER BY name COLLATE NOCASE'
+        ).bind(like, like, like).all()).results;
+      } else {
+        rows = (await db.prepare('SELECT * FROM contacts ORDER BY name COLLATE NOCASE').all()).results;
+      }
+      if (tag) {
+        const t = tag.toLowerCase();
+        rows = rows.filter(r => (r.tags || '').toLowerCase().split(',').map(s => s.trim()).includes(t));
+      }
+      return json(rows);
+    }
+
+    if (path === '/api/contacts' && method === 'POST') {
+      const { name, email, phone, tags, source, opt_in_email, opt_in_sms, notes } = body;
+      if (!name && !email && !phone) return err('At least one of name, email, or phone is required');
+      const id = randId(8);
+      const now = new Date().toISOString();
+      await db.prepare(
+        'INSERT INTO contacts (id, name, email, phone, tags, source, opt_in_email, opt_in_sms, notes, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(id, name || '', email || '', phone || '', tags || '', source || '', opt_in_email === false ? 0 : 1, opt_in_sms === false ? 0 : 1, notes || '', user.username, now, now).run();
+      return json({ success: true, id });
+    }
+
+    if (path.startsWith('/api/contacts/') && path.endsWith('/import') === false && method === 'PUT') {
+      const id = path.split('/')[3];
+      const { name, email, phone, tags, source, opt_in_email, opt_in_sms, notes } = body;
+      await db.prepare(
+        'UPDATE contacts SET name=?, email=?, phone=?, tags=?, source=?, opt_in_email=?, opt_in_sms=?, notes=?, updated_at=? WHERE id=?'
+      ).bind(name || '', email || '', phone || '', tags || '', source || '', opt_in_email === false ? 0 : 1, opt_in_sms === false ? 0 : 1, notes || '', new Date().toISOString(), id).run();
+      return json({ success: true });
+    }
+
+    if (path.startsWith('/api/contacts/') && method === 'DELETE') {
+      if (user.role !== 'admin') return err('Admin only', 403);
+      const id = path.split('/')[3];
+      await db.prepare('DELETE FROM contacts WHERE id = ?').bind(id).run();
+      return json({ success: true });
+    }
+
+    if (path === '/api/contacts/import' && method === 'POST') {
+      const { rows } = body; // array of {name, email, phone, tags, source, notes}
+      if (!Array.isArray(rows) || !rows.length) return err('rows array required');
+      const now = new Date().toISOString();
+      let inserted = 0, skipped = 0;
+      for (const r of rows) {
+        if (!r.name && !r.email && !r.phone) { skipped++; continue; }
+        // Skip if email or phone already exists (dedupe)
+        if (r.email) {
+          const exists = await db.prepare('SELECT id FROM contacts WHERE email = ?').bind(r.email).first();
+          if (exists) { skipped++; continue; }
+        } else if (r.phone) {
+          const exists = await db.prepare('SELECT id FROM contacts WHERE phone = ?').bind(r.phone).first();
+          if (exists) { skipped++; continue; }
+        }
+        await db.prepare(
+          'INSERT INTO contacts (id, name, email, phone, tags, source, opt_in_email, opt_in_sms, notes, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?, ?)'
+        ).bind(randId(8), r.name || '', r.email || '', r.phone || '', r.tags || '', r.source || '', r.notes || '', user.username, now, now).run();
+        inserted++;
+      }
+      return json({ success: true, inserted, skipped });
+    }
+
     // ── LIBRARY ──────────────────────────────────────────────────────────────
     if (path === '/api/library' && method === 'GET') {
       const { results } = await db

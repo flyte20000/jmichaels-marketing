@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -204,7 +205,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
 
   <div class="tabbar">
     <div class="tab active" data-t="generate" onclick="switchTab('generate')">✦ Generate</div>
-    <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Media</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
+    <div class="tab" data-t="photos" onclick="switchTab('photos')">📷 Media</div><div class="tab" data-t="contacts" onclick="switchTab('contacts')">📇 Contacts</div><div class="tab" data-t="calendar" onclick="switchTab('calendar')">Calendar</div>
     <div class="tab" data-t="analytics" onclick="switchTab('analytics')">Analytics</div>
     <div class="tab" data-t="scores" onclick="switchTab('scores')">Scores</div>
     <div class="tab" data-t="reminders" onclick="switchTab('reminders')">Reminders <span id="rem-tab-badge" style="display:none;background:var(--orange);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px">0</span></div>
@@ -319,6 +320,47 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
     </div>
   </div>
 </div>
+<!-- CONTACTS -->
+<div class="panel" id="panel-contacts">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:10px;flex-wrap:wrap">
+    <div class="sec" style="margin:0">Contacts <span id="contact-count" style="font-size:11px;color:var(--t2);font-weight:400;margin-left:6px"></span></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <input id="contact-search" type="text" placeholder="Search name, email, phone…" oninput="onContactSearch()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:6px 10px;color:var(--text);font-size:12px;min-width:240px">
+      <select id="contact-tag-filter" onchange="renderContacts()" style="background:var(--s2);border:1px solid var(--border2);border-radius:var(--rsm);padding:6px 10px;color:var(--t2);font-size:12px"><option value="">All tags</option></select>
+      <button class="btn-o" onclick="document.getElementById('contact-csv-input').click()">📤 Import CSV</button>
+      <input type="file" id="contact-csv-input" accept=".csv,text/csv" style="display:none" onchange="importContactsCsv(this)">
+      <button class="btn-add" onclick="openContactModal(null)">+ Add Contact</button>
+    </div>
+  </div>
+  <div id="contact-csv-status" style="font-size:11px;color:var(--t2);margin-bottom:8px"></div>
+  <div id="contact-list" style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden"></div>
+
+  <div class="mwrap" id="contact-modal" style="margin-top:1rem">
+    <div class="mhead"><div class="mtitle" id="contact-modal-title">Add Contact</div><button class="bsm" onclick="closeContactModal()">✕</button></div>
+    <div class="g2" style="gap:10px;margin-bottom:10px">
+      <div class="f" style="margin:0"><label>Name</label><input id="ct-name" placeholder="Full name"></div>
+      <div class="f" style="margin:0"><label>Source</label><input id="ct-source" placeholder="e.g. happy hour signup"></div>
+    </div>
+    <div class="g2" style="gap:10px;margin-bottom:10px">
+      <div class="f" style="margin:0"><label>Email</label><input id="ct-email" type="email" placeholder="name@example.com"></div>
+      <div class="f" style="margin:0"><label>Phone</label><input id="ct-phone" type="tel" placeholder="(555) 123-4567"></div>
+    </div>
+    <div class="f"><label>Tags <span style="font-size:10px;color:var(--t2);font-weight:400">(comma-separated, e.g. regular, event-attendee)</span></label><input id="ct-tags" placeholder="regular, vip, locals"></div>
+    <div class="f"><label>Notes</label><textarea id="ct-notes" rows="2" placeholder="Optional"></textarea></div>
+    <div style="display:flex;gap:18px;font-size:11px;color:var(--t2);margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ct-optin-email" checked>Opt-in for email</label>
+      <label style="display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ct-optin-sms" checked>Opt-in for SMS</label>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:8px">
+      <button class="btn-d" id="ct-del-btn" onclick="deleteContact()" style="display:none">Delete</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn-o" onclick="closeContactModal()">Cancel</button>
+        <button class="btn-add" onclick="saveContact()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- CALENDAR -->
     <div class="panel" id="panel-calendar">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
@@ -697,6 +739,7 @@ function switchTab(t) {
   if (t === 'scores') renderScoreHistory();
   if (t === 'reminders') renderReminders();
   if (t === 'photos') { renderFolders(); loadPhotos(); }
+  if (t === 'contacts') renderContacts();
   if (t === 'notifications') { renderNotifs(); markAllRead(); }
   if (t === 'users' && CU.role === 'admin') { renderUsers(); renderInvites(); }
 }
@@ -1699,6 +1742,158 @@ async function uploadPhotos(input) {
   }
   s.textContent = ''; input.value = ''; showToast(`Uploaded to ${targetFolder}!`); renderFolders(); loadPhotos();
 }
+
+// ── CONTACTS ────────────────────────────────────────────────────────────────
+let editingContactId = null;
+let contactSearchTimer = null;
+
+function onContactSearch() {
+  clearTimeout(contactSearchTimer);
+  contactSearchTimer = setTimeout(renderContacts, 200);
+}
+
+async function renderContacts() {
+  const q = document.getElementById('contact-search').value.trim();
+  const tag = document.getElementById('contact-tag-filter').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (tag) params.set('tag', tag);
+  const rows = await api('/api/contacts' + (params.toString() ? '?' + params.toString() : ''));
+  document.getElementById('contact-count').textContent = `(${rows.length})`;
+
+  // Update tag filter dropdown with all unique tags
+  const tagSel = document.getElementById('contact-tag-filter');
+  const allTags = new Set();
+  rows.forEach(r => (r.tags || '').split(',').map(s => s.trim()).filter(Boolean).forEach(t => allTags.add(t)));
+  const curTag = tagSel.value;
+  const opts = ['<option value="">All tags</option>'].concat([...allTags].sort().map(t => `<option value="${t}">${t}</option>`));
+  tagSel.innerHTML = opts.join('');
+  if (curTag && [...allTags].includes(curTag)) tagSel.value = curTag;
+
+  const list = document.getElementById('contact-list');
+  if (!rows.length) { list.innerHTML = '<div class="empty" style="padding:2rem;text-align:center;color:var(--t2)">No contacts yet — import a CSV or click + Add Contact.</div>'; return; }
+  const isAdmin = CU && CU.role === 'admin';
+  list.innerHTML = `
+    <div style="display:grid;grid-template-columns:1.4fr 1.5fr 1fr 1.3fr 0.8fr 90px;gap:8px;padding:8px 12px;background:var(--s2);font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;font-weight:500">
+      <div>Name</div><div>Email</div><div>Phone</div><div>Tags</div><div>Opt-in</div><div></div>
+    </div>` + rows.map(r => `
+    <div style="display:grid;grid-template-columns:1.4fr 1.5fr 1fr 1.3fr 0.8fr 90px;gap:8px;padding:10px 12px;border-top:1px solid var(--border);align-items:center;font-size:12px">
+      <div style="font-weight:500;color:var(--text)">${escapeHtml(r.name||'(no name)')}</div>
+      <div style="color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(r.email||'')}</div>
+      <div style="color:var(--t2)">${escapeHtml(r.phone||'')}</div>
+      <div style="color:var(--gold2);font-size:10px">${(r.tags||'').split(',').map(s=>s.trim()).filter(Boolean).map(t=>`<span style="display:inline-block;background:var(--s2);padding:1px 6px;border-radius:8px;margin:1px 2px">${escapeHtml(t)}</span>`).join('')}</div>
+      <div style="font-size:10px;color:var(--t2)">${r.opt_in_email?'<span style="color:var(--green)">E</span>':'<span style="opacity:0.3">E</span>'} ${r.opt_in_sms?'<span style="color:var(--green)">S</span>':'<span style="opacity:0.3">S</span>'}</div>
+      <div style="text-align:right"><button class="btn-o" style="font-size:10px;padding:3px 8px" onclick="openContactModal('${r.id}')">Edit</button></div>
+    </div>`).join('');
+}
+
+function escapeHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function openContactModal(id) {
+  editingContactId = id;
+  document.getElementById('contact-modal-title').textContent = id ? 'Edit Contact' : 'Add Contact';
+  document.getElementById('ct-del-btn').style.display = (id && CU && CU.role === 'admin') ? 'inline-block' : 'none';
+  if (id) {
+    const rows = await api('/api/contacts');
+    const c = rows.find(r => r.id === id);
+    if (!c) { showToast('Not found'); return; }
+    document.getElementById('ct-name').value = c.name || '';
+    document.getElementById('ct-email').value = c.email || '';
+    document.getElementById('ct-phone').value = c.phone || '';
+    document.getElementById('ct-tags').value = c.tags || '';
+    document.getElementById('ct-source').value = c.source || '';
+    document.getElementById('ct-notes').value = c.notes || '';
+    document.getElementById('ct-optin-email').checked = !!c.opt_in_email;
+    document.getElementById('ct-optin-sms').checked = !!c.opt_in_sms;
+  } else {
+    ['ct-name','ct-email','ct-phone','ct-tags','ct-source','ct-notes'].forEach(i => document.getElementById(i).value = '');
+    document.getElementById('ct-optin-email').checked = true;
+    document.getElementById('ct-optin-sms').checked = true;
+  }
+  document.getElementById('contact-modal').style.display = 'block';
+}
+
+function closeContactModal() { document.getElementById('contact-modal').style.display = 'none'; editingContactId = null; }
+
+async function saveContact() {
+  const payload = {
+    name: document.getElementById('ct-name').value.trim(),
+    email: document.getElementById('ct-email').value.trim(),
+    phone: document.getElementById('ct-phone').value.trim(),
+    tags: document.getElementById('ct-tags').value.trim(),
+    source: document.getElementById('ct-source').value.trim(),
+    notes: document.getElementById('ct-notes').value.trim(),
+    opt_in_email: document.getElementById('ct-optin-email').checked,
+    opt_in_sms: document.getElementById('ct-optin-sms').checked,
+  };
+  if (!payload.name && !payload.email && !payload.phone) { showToast('Enter at least a name, email, or phone'); return; }
+  try {
+    if (editingContactId) await api('/api/contacts/' + editingContactId, 'PUT', payload);
+    else await api('/api/contacts', 'POST', payload);
+    closeContactModal();
+    renderContacts();
+    showToast('Saved');
+  } catch (e) {}
+}
+
+async function deleteContact() {
+  if (!editingContactId) return;
+  if (CU && CU.role !== 'admin') { alert('Admin only'); return; }
+  if (!confirm('Delete this contact?')) return;
+  try {
+    await api('/api/contacts/' + editingContactId, 'DELETE');
+    closeContactModal();
+    renderContacts();
+    showToast('Contact deleted');
+  } catch (e) {}
+}
+
+function importContactsCsv(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const status = document.getElementById('contact-csv-status');
+  status.textContent = 'Parsing CSV…';
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: async (res) => {
+      const headerMap = {};
+      // Lowercase header keys; map common variants
+      (res.meta.fields || []).forEach(h => {
+        const k = (h || '').toLowerCase().trim();
+        if (['name','full name','first name','contact name'].includes(k)) headerMap.name = h;
+        else if (['email','email address','e-mail'].includes(k)) headerMap.email = h;
+        else if (['phone','phone number','mobile','cell'].includes(k)) headerMap.phone = h;
+        else if (['tags','tag','labels'].includes(k)) headerMap.tags = h;
+        else if (['source','origin','from'].includes(k)) headerMap.source = h;
+        else if (['notes','note','comments'].includes(k)) headerMap.notes = h;
+      });
+      const rows = res.data.map(r => ({
+        name: headerMap.name ? (r[headerMap.name] || '').toString().trim() : '',
+        email: headerMap.email ? (r[headerMap.email] || '').toString().trim() : '',
+        phone: headerMap.phone ? (r[headerMap.phone] || '').toString().trim() : '',
+        tags: headerMap.tags ? (r[headerMap.tags] || '').toString().trim() : '',
+        source: headerMap.source ? (r[headerMap.source] || '').toString().trim() : '',
+        notes: headerMap.notes ? (r[headerMap.notes] || '').toString().trim() : '',
+      })).filter(r => r.name || r.email || r.phone);
+      if (!rows.length) { status.textContent = 'No valid rows found. Expected headers: name, email, phone, tags, source, notes'; input.value = ''; return; }
+      status.textContent = `Importing ${rows.length} rows…`;
+      try {
+        const result = await api('/api/contacts/import', 'POST', { rows });
+        status.textContent = `Imported ${result.inserted} contact${result.inserted !== 1 ? 's' : ''}${result.skipped ? `, skipped ${result.skipped} (duplicates or empty)` : ''}.`;
+        renderContacts();
+      } catch (e) {
+        status.textContent = 'Import failed: ' + (e.message || '');
+      }
+      input.value = '';
+    },
+    error: (err) => {
+      status.textContent = 'Parse error: ' + err.message;
+      input.value = '';
+    }
+  });
+}
+
  initApp();
 </script>
 </body>
