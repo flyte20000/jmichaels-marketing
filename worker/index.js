@@ -838,6 +838,24 @@ export default {
       return json({ success: true });
     }
 
+    // ── SETTINGS ─────────────────────────────────────────────────────────────
+    if (path === '/api/settings') {
+      if (method === 'GET') {
+        const row = await db.prepare('SELECT data FROM app_settings WHERE id = ?').bind('current').first();
+        if (!row) return json({});
+        return json(JSON.parse(row.data || '{}'));
+      }
+      if (method === 'PUT') {
+        const now = new Date().toISOString();
+        await db.prepare(`
+          INSERT INTO app_settings (id, data, updated_at, updated_by)
+          VALUES ('current', ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at, updated_by = excluded.updated_by
+        `).bind(JSON.stringify(body), now, user.username).run();
+        return json({ ok: true });
+      }
+    }
+
     return err('Not found', 404);
   },
 };

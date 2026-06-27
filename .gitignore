@@ -16,3 +16,7 @@ Thumbs.db
 .dev.vars
 .env
 .env.local
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
