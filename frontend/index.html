@@ -147,10 +147,25 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
 /* APPROVALS */
 .btn-approve{background:#0A1F0D;border:1px solid var(--green);color:var(--green);border-radius:var(--rsm);padding:6px 14px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif}
 .btn-reject{background:#1F0A0A;border:1px solid var(--red);color:var(--red);border-radius:var(--rsm);padding:6px 14px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif}
+/* PUBLISH BAR */
+.pub-bar{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:none}
+.pub-bar.show{display:block}
+.pub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-bottom:8px}
+.pub-btn{display:flex;align-items:center;gap:9px;padding:11px 13px;border-radius:var(--rsm);border:1px solid;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;transition:all .2s;width:100%;text-align:left}
+.pub-icon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.pub-name{flex:1}
+.pub-check{font-size:11px;opacity:0;transition:opacity .2s;color:var(--green)}
+.pub-btn.copied .pub-check{opacity:1}
+.pub-fb{background:#1a2540;border-color:#4267B2;color:#9ABAF0}.pub-fb:hover{background:#223060}
+.pub-ig{background:#2a1828;border-color:#C13584;color:#E0A0C8}.pub-ig:hover{background:#381d38}
+.pub-gg{background:#1a2a1a;border-color:#34A853;color:#70D080}.pub-gg:hover{background:#223822}
+.pub-yelp{background:#2a1818;border-color:#D32323;color:#F08080}.pub-yelp:hover{background:#382020}
+.pub-trip{background:#18282a;border-color:#00AA6C;color:#60C890}.pub-trip:hover{background:#203838}
 /* RESPONSIVE */
 @media(max-width:640px){
   .gen-wrap,.g2,.g3{grid-template-columns:1fr}
   .qgrid{grid-template-columns:1fr 1fr}
+  .pub-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -215,6 +230,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
     <div class="tab" data-t="approvals" onclick="switchTab('approvals')">Approvals <span id="appr-badge" style="display:none;background:var(--purple);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px">0</span></div>
     <div class="tab" data-t="notifications" onclick="switchTab('notifications')">Notifications</div>
     <div class="tab admin-only" data-t="users" onclick="switchTab('users')">Users & Invites</div>
+    <div class="tab admin-only" data-t="settings" onclick="switchTab('settings')">⚙ Settings</div>
   </div>
 
   <div class="content">
@@ -267,6 +283,13 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
             <button class="btn-o" id="send-sms-btn" style="display:none" onclick="openSendSms()">💬 Send SMS Now</button>
           </div>
           <div id="gen-conf" style="font-size:11px;color:var(--green);min-height:16px"></div>
+
+          <!-- PUBLISH BAR -->
+          <div class="pub-bar" id="pub-bar">
+            <div class="sec" style="margin-bottom:10px">Post to Social Media — click to copy &amp; open</div>
+            <div class="pub-grid" id="pub-grid"></div>
+            <div style="font-size:11px;color:var(--t3)">Content is copied to your clipboard. Paste it when the platform opens in a new tab.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -662,6 +685,40 @@ html,body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif
       </div>
     </div>
 
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="card" style="max-width:600px">
+        <div class="sec">Social Media Page Links</div>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:1.25rem;line-height:1.7">Paste the direct URL to J Michael's page on each platform. After generating a post, click the platform button to copy the content and open that page automatically.</p>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <div class="f" style="margin:0">
+            <label style="display:flex;align-items:center;gap:8px"><span style="background:#1a2540;border:1px solid #4267B2;color:#9ABAF0;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">f</span> Facebook Page URL</label>
+            <input id="set-fb" type="url" placeholder="https://www.facebook.com/jmichaelstavern">
+          </div>
+          <div class="f" style="margin:0">
+            <label style="display:flex;align-items:center;gap:8px"><span style="background:#2a1828;border:1px solid #C13584;color:#E0A0C8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">ig</span> Instagram Profile URL</label>
+            <input id="set-ig" type="url" placeholder="https://www.instagram.com/jmichaelstavern">
+          </div>
+          <div class="f" style="margin:0">
+            <label style="display:flex;align-items:center;gap:8px"><span style="background:#1a2a1a;border:1px solid #34A853;color:#70D080;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">G</span> Google Business URL</label>
+            <input id="set-gg" type="url" placeholder="https://business.google.com/...">
+          </div>
+          <div class="f" style="margin:0">
+            <label style="display:flex;align-items:center;gap:8px"><span style="background:#2a1818;border:1px solid #D32323;color:#F08080;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">Y</span> Yelp Page URL</label>
+            <input id="set-yelp" type="url" placeholder="https://www.yelp.com/biz/j-michaels-tavern...">
+          </div>
+          <div class="f" style="margin:0">
+            <label style="display:flex;align-items:center;gap:8px"><span style="background:#18282a;border:1px solid #00AA6C;color:#60C890;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px">✈</span> TripAdvisor Page URL</label>
+            <input id="set-trip" type="url" placeholder="https://www.tripadvisor.com/...">
+          </div>
+        </div>
+        <div style="margin-top:1.25rem;display:flex;align-items:center;gap:12px">
+          <button class="btn-add" onclick="saveSocialLinks()">Save Links</button>
+          <span id="set-conf" style="font-size:12px;color:var(--green)"></span>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -796,6 +853,7 @@ function showApp() {
   renderReminders();
   if (CU.role === 'admin') { renderUsers(); renderInvites(); }
   checkRemBadge();
+  loadSocialLinks();
 }
 
 function switchTab(t) {
@@ -809,6 +867,7 @@ function switchTab(t) {
   if (t === 'contacts') renderContacts();
   if (t === 'notifications') { renderNotifs(); markAllRead(); }
   if (t === 'users' && CU.role === 'admin') { renderUsers(); renderInvites(); }
+  if (t === 'settings') loadSocialLinks();
 }
 
 const QP = [
@@ -1109,6 +1168,7 @@ async function genContent() {
   btn.disabled = false;
   btn.textContent = 'Generate Content';
   updateSendEmailButton();
+  renderPublishBar(getSelectedPlatforms());
 }
 
 function copyOut() {
@@ -2143,6 +2203,83 @@ function importContactsCsv(input) {
       input.value = '';
     }
   });
+}
+
+// ─── SOCIAL LINKS & PUBLISH BAR ───────────────────────────────────────────────
+let SOCIAL_LINKS = { fb:'', ig:'', gg:'', yelp:'', trip:'' };
+
+const PLATFORM_META = {
+  fb:   { name:'Facebook',    icon:'f',  cls:'pub-fb',   fallback:'https://www.facebook.com/' },
+  ig:   { name:'Instagram',   icon:'ig', cls:'pub-ig',   fallback:'https://www.instagram.com/' },
+  gg:   { name:'Google',      icon:'G',  cls:'pub-gg',   fallback:'https://business.google.com/' },
+  yelp: { name:'Yelp',        icon:'Y',  cls:'pub-yelp', fallback:'https://biz.yelp.com/' },
+  trip: { name:'TripAdvisor', icon:'✈',  cls:'pub-trip', fallback:'https://www.tripadvisor.com/' },
+};
+
+async function loadSocialLinks() {
+  try {
+    const data = await api('/api/settings');
+    if (data && data.social) SOCIAL_LINKS = { ...SOCIAL_LINKS, ...data.social };
+    ['fb','ig','gg','yelp','trip'].forEach(p => {
+      const el = document.getElementById('set-' + p);
+      if (el) el.value = SOCIAL_LINKS[p] || '';
+    });
+  } catch {}
+}
+
+async function saveSocialLinks() {
+  try {
+    let current = {};
+    try { current = await api('/api/settings') || {}; } catch {}
+    const social = {
+      fb:   (document.getElementById('set-fb')?.value || '').trim(),
+      ig:   (document.getElementById('set-ig')?.value || '').trim(),
+      gg:   (document.getElementById('set-gg')?.value || '').trim(),
+      yelp: (document.getElementById('set-yelp')?.value || '').trim(),
+      trip: (document.getElementById('set-trip')?.value || '').trim(),
+    };
+    await api('/api/settings', 'PUT', { ...current, social });
+    SOCIAL_LINKS = social;
+    const conf = document.getElementById('set-conf');
+    conf.textContent = '✓ Saved!';
+    setTimeout(() => { conf.textContent = ''; }, 2500);
+  } catch { showToast('Failed to save settings'); }
+}
+
+function renderPublishBar(plats) {
+  const bar = document.getElementById('pub-bar');
+  const grid = document.getElementById('pub-grid');
+  if (!bar || !grid) return;
+  const postable = (plats || []).filter(p => PLATFORM_META[p]);
+  if (!postable.length || !hasGeneratedContent()) { bar.classList.remove('show'); return; }
+  grid.innerHTML = postable.map(p => {
+    const m = PLATFORM_META[p];
+    return `<button class="pub-btn ${m.cls}" id="pub-btn-${p}" onclick="copyAndOpen('${p}')">
+      <span class="pub-icon">${m.icon}</span>
+      <span class="pub-name">${m.name}</span>
+      <span class="pub-check">✓ Copied</span>
+    </button>`;
+  }).join('');
+  bar.classList.add('show');
+}
+
+async function copyAndOpen(platform) {
+  const text = genOutByPlatform[platform] || genOut;
+  if (!text) { showToast('Generate content first'); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  const url = SOCIAL_LINKS[platform] || PLATFORM_META[platform]?.fallback || '#';
+  window.open(url, '_blank');
+  const btn = document.getElementById('pub-btn-' + platform);
+  if (btn) { btn.classList.add('copied'); setTimeout(() => btn.classList.remove('copied'), 2500); }
+  showToast('Copied! Paste it on ' + (PLATFORM_META[platform]?.name || platform));
 }
 
  initApp();
